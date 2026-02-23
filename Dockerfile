@@ -93,7 +93,7 @@ RUN cp -r /usr/local/lib/python3.12/site-packages/usrp* /app/venv/lib/python3.12
 WORKDIR /app
 
 # Now pip will use the virtual environment
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip setuptools
 RUN pip install --no-cache-dir -r requirements.txt
 
 # compile SoapySDR
