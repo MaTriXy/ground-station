@@ -143,11 +143,6 @@ export const SettingsTabs = React.memo(function SettingsTabs({initialMainTab, in
     const activeTab = getTabFromPath(location.pathname);
     const activeMainTab = getTabCategory(activeTab) ?? initialMainTab;
 
-    // Forms for each tab can be extracted into separate components if desired:
-    const LocationForm = () => (
-        <LocationPage/>
-    );
-
     let tabsList = [];
     // Define arrays of tabs for each main category
     switch (activeMainTab) {
@@ -201,7 +196,7 @@ export const SettingsTabs = React.memo(function SettingsTabs({initialMainTab, in
             activeTabContent = <PreferencesForm/>;
             break;
         case "location":
-            activeTabContent = <LocationForm/>;
+            activeTabContent = <LocationPage/>;
             break;
         case "rigcontrol":
             activeTabContent = <RigControlForm/>;

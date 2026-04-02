@@ -51,6 +51,13 @@ export default [
             'no-empty-pattern': 'off',
             'no-prototype-builtins': 'off',
             'react-refresh/only-export-components': 'off',
+            // Relax React Compiler-driven hook rules for incremental adoption.
+            'react-hooks/set-state-in-effect': 'off',
+            'react-hooks/refs': 'off',
+            'react-hooks/purity': 'off',
+            'react-hooks/immutability': 'off',
+            'react-hooks/preserve-manual-memoization': 'off',
+            'react-hooks/static-components': 'off',
         },
     },
 ]
