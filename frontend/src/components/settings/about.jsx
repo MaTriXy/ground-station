@@ -23,8 +23,6 @@ import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
-    Alert,
-    AlertTitle,
     Box,
     Button,
     Card,
@@ -140,12 +138,7 @@ const AboutPage = () => {
 
     return (
         <Paper elevation={3} sx={{ p: 2, mt: 0 }}>
-            <Alert severity="info" role="status" aria-live="polite">
-                <AlertTitle>{t('about.title', { defaultValue: 'About Ground Station' })}</AlertTitle>
-                {t('about.subtitle', { defaultValue: 'Project overview, capabilities, technology stack, and license details.' })}
-            </Alert>
-
-            <Stack spacing={2} sx={{ mt: 2 }}>
+            <Stack spacing={2}>
                 <Card elevation={1} sx={{ p: 2 }}>
                     <Grid container spacing={2} columns={12} alignItems="center">
                         <Grid size={{ xs: 12, md: 8 }}>

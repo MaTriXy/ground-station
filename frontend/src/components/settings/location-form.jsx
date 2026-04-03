@@ -19,8 +19,6 @@
 
 import React, { useEffect } from 'react';
 import {
-    Alert,
-    AlertTitle,
     Box,
     Button,
     Chip,
@@ -361,12 +359,7 @@ const LocationPage = () => {
 
     return (
         <Paper elevation={3} sx={{ padding: 2, marginTop: 0 }}>
-            <Alert severity="info" role="status" aria-live="polite">
-                <AlertTitle>{t('location.title')}</AlertTitle>
-                {t('location.subtitle')}
-            </Alert>
-
-            <Grid container spacing={2} columns={{ xs: 1, sm: 1, md: 1, lg: 2 }} sx={{ pt: 2 }}>
+            <Grid container spacing={2} columns={{ xs: 1, sm: 1, md: 1, lg: 2 }}>
                 <Grid size={{ xs: 1, md: 1 }}>
                     <Box
                         sx={{
@@ -510,6 +503,10 @@ const LocationPage = () => {
                                 </Box>
                             </Grid>
                         </Grid>
+
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+                            {t('location.subtitle')}
+                        </Typography>
                     </Box>
                 </Grid>
 

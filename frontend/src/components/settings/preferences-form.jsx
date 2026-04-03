@@ -27,8 +27,6 @@ import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
-    Alert,
-    AlertTitle,
     Backdrop,
     Box,
     Button,
@@ -304,12 +302,7 @@ const PreferencesForm = () => {
             </Backdrop>
 
             <Paper elevation={3} sx={{ p: 2, mt: 0 }}>
-                <Alert severity="info" role="status" aria-live="polite">
-                    <AlertTitle>{t('preferences.title')}</AlertTitle>
-                    {t('preferences.subtitle')}
-                </Alert>
-
-                <Box component="form" sx={{ mt: 2 }}>
+                <Box component="form">
                     <Stack spacing={3}>
                         <Box>
                             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
