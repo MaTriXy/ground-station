@@ -35,6 +35,9 @@ import { useTranslation } from 'react-i18next';
 import { enUS, elGR } from '@mui/x-data-grid/locales';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SettingsIcon from '@mui/icons-material/Settings';
+import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
+import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
 import {
     fetchNextPasses,
     updateSatellitePassesWithElevationCurves,
@@ -184,6 +187,37 @@ const DurationFormatter = React.memo(function DurationFormatter({params, event_s
     }
 });
 
+const PassStatusCell = React.memo(function PassStatusCell({status}) {
+    const statusConfig = {
+        live: {
+            label: 'Live',
+            color: 'success',
+            icon: <RadioButtonCheckedIcon sx={{ fontSize: '0.85rem' }} />,
+        },
+        upcoming: {
+            label: 'Upcoming',
+            color: 'warning',
+            icon: <AccessTimeFilledIcon sx={{ fontSize: '0.85rem' }} />,
+        },
+        passed: {
+            label: 'Passed',
+            color: 'info',
+            icon: <DoneAllIcon sx={{ fontSize: '0.85rem' }} />,
+        },
+    };
+    const config = statusConfig[status] || statusConfig.upcoming;
+    return (
+        <Chip
+            icon={config.icon}
+            size="small"
+            label={config.label}
+            color={config.color}
+            variant={status === 'upcoming' ? 'outlined' : 'filled'}
+            sx={{ fontWeight: 700, minWidth: 85 }}
+        />
+    );
+});
+
 
 const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
     satellitePasses,
@@ -225,16 +259,7 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
             flex: 1,
             valueGetter: (_value, row) => getPassStatus(row, now),
             sortComparator: (v1, v2) => getPassStatusPriority(v1) - getPassStatusPriority(v2),
-            renderCell: (params) => {
-                const status = params.value;
-                if (status === 'live') {
-                    return <Chip size="small" label="Live" color="success" sx={{ fontWeight: 700 }} />;
-                }
-                if (status === 'passed') {
-                    return <Chip size="small" label="Passed" color="info" sx={{ fontWeight: 700 }} />;
-                }
-                return <Chip size="small" label="Upcoming" color="warning" variant="outlined" sx={{ fontWeight: 700 }} />;
-            }
+            renderCell: (params) => <PassStatusCell status={params.value} />
         },
         {
             field: 'event_start',
