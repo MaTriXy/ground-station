@@ -249,7 +249,7 @@ export const VfoLiveMeters = React.memo(function VfoLiveMeters({ vfoIndex, vfoAc
         };
 
         updateMetrics();
-        const interval = setInterval(updateMetrics, 200);
+        const interval = setInterval(updateMetrics, 250);
         return () => clearInterval(interval);
     }, [vfoActive, vfoIndex, getAudioBufferLength, getVfoAudioLevel, getVfoRfPower]);
 
