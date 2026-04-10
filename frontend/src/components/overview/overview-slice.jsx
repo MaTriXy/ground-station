@@ -243,7 +243,7 @@ const overviewSlice = createSlice({
             elevation: true,
             progress: true,
             duration: true,
-            transmitters: true,
+            transmitters: false,
             transmitter_links: true,
             event_start: true,
             event_end: true,
