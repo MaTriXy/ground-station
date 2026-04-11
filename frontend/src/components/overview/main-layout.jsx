@@ -167,118 +167,148 @@ const GlobalSatelliteTrackLayout = React.memo(function GlobalSatelliteTrackLayou
     // Default layout if none in localStorage
     const defaultLayouts = {
         "lg": [{
-            "w": 6,
-            "h": 13,
+            "i": "map",
             "x": 0,
             "y": 0,
-            "i": "map",
+            "w": 5,
+            "h": 13,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
-            "w": 12,
-            "h": 8,
+            "i": "passes",
             "x": 0,
             "y": 18,
-            "i": "passes",
+            "w": 12,
+            "h": 8,
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
-            "w": 2,
-            "h": 13,
+            "i": "sat-info",
             "x": 10,
             "y": 0,
-            "i": "sat-info",
+            "w": 2,
+            "h": 13,
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
-        }, {"w": 4, "h": 13, "x": 6, "y": 0, "i": "satellite-group", "moved": false, "static": false}, {
-            "w": 12,
-            "h": 5,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
+            "i": "satellite-group",
+            "x": 5,
+            "y": 0,
+            "w": 5,
+            "h": 13,
+            "moved": false,
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
+            "i": "timeline",
             "x": 0,
             "y": 13,
-            "i": "timeline",
+            "w": 12,
+            "h": 5,
             "moved": false,
-            "static": false
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }],
         "xs": [{
-            "w": 2,
-            "h": 17,
+            "i": "map",
             "x": 0,
             "y": 0,
-            "i": "map",
+            "w": 2,
+            "h": 17,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
-            "w": 2,
-            "h": 8,
+            "i": "passes",
             "x": 0,
             "y": 35,
-            "i": "passes",
+            "w": 2,
+            "h": 8,
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
-            "w": 2,
-            "h": 14,
+            "i": "sat-info",
             "x": 0,
             "y": 43,
-            "i": "sat-info",
+            "w": 2,
+            "h": 14,
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
-        }, {"w": 2, "h": 12, "x": 0, "y": 23, "i": "satellite-group", "moved": false, "static": false}, {
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
+            "i": "satellite-group",
+            "x": 0,
+            "y": 23,
+            "w": 2,
+            "h": 12,
+            "moved": false,
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
+            "i": "timeline",
+            "x": 0,
+            "y": 17,
             "w": 2,
             "h": 6,
-            "x": 0,
-            "y": 17,
-            "i": "timeline",
             "moved": false,
-            "static": false
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }],
         "sm": [{
-            "w": 6,
-            "h": 17,
+            "i": "map",
             "x": 0,
             "y": 0,
-            "i": "map",
+            "w": 6,
+            "h": 17,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
-            "w": 6,
-            "h": 8,
+            "i": "passes",
             "x": 0,
             "y": 32,
-            "i": "passes",
+            "w": 6,
+            "h": 8,
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
-            "w": 6,
-            "h": 12,
+            "i": "sat-info",
             "x": 0,
             "y": 40,
-            "i": "sat-info",
+            "w": 6,
+            "h": 12,
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
-        }, {"w": 6, "h": 9, "x": 0, "y": 23, "i": "satellite-group", "moved": false, "static": false}, {
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
+            "i": "satellite-group",
+            "x": 0,
+            "y": 23,
             "w": 6,
-            "h": 6,
+            "h": 9,
+            "moved": false,
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
+            "i": "timeline",
             "x": 0,
             "y": 17,
-            "i": "timeline",
+            "w": 6,
+            "h": 6,
             "moved": false,
-            "static": false
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }],
         "xxs": [{
             "w": 2,
@@ -288,7 +318,7 @@ const GlobalSatelliteTrackLayout = React.memo(function GlobalSatelliteTrackLayou
             "i": "map",
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
             "w": 2,
             "h": 9,
@@ -298,7 +328,7 @@ const GlobalSatelliteTrackLayout = React.memo(function GlobalSatelliteTrackLayou
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
             "w": 2,
             "h": 14,
@@ -308,53 +338,73 @@ const GlobalSatelliteTrackLayout = React.memo(function GlobalSatelliteTrackLayou
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
-        }, {"w": 2, "h": 13, "x": 0, "y": 32, "i": "satellite-group", "moved": false, "static": false}, {
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
+            "w": 2,
+            "h": 13,
+            "x": 0,
+            "y": 32,
+            "i": "satellite-group",
+            "moved": false,
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
             "w": 2,
             "h": 6,
             "x": 0,
             "y": 17,
             "i": "timeline",
             "moved": false,
-            "static": false
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }],
         "md": [{
+            "i": "map",
+            "x": 0,
+            "y": 0,
             "w": 7,
             "h": 17,
-            "x": 0,
-            "y": 0,
-            "i": "map",
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
-            "w": 10,
-            "h": 8,
+            "i": "passes",
             "x": 0,
             "y": 29,
-            "i": "passes",
+            "w": 10,
+            "h": 8,
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }, {
-            "w": 3,
-            "h": 17,
+            "i": "sat-info",
             "x": 7,
             "y": 0,
-            "i": "sat-info",
+            "w": 3,
+            "h": 17,
             "minH": 7,
             "moved": false,
             "static": false,
-            "resizeHandles": ["se", "ne", "nw", "sw", "s", "e", "w"]
-        }, {"w": 10, "h": 7, "x": 0, "y": 22, "i": "satellite-group", "moved": false, "static": false}, {
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
+            "i": "satellite-group",
+            "x": 0,
+            "y": 22,
             "w": 10,
-            "h": 5,
+            "h": 7,
+            "moved": false,
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
+        }, {
+            "i": "timeline",
             "x": 0,
             "y": 17,
-            "i": "timeline",
+            "w": 10,
+            "h": 5,
             "moved": false,
-            "static": false
+            "static": false,
+            "resizeHandles": ["s", "sw", "w", "se", "nw", "ne", "e"]
         }]
     };
 

@@ -16,6 +16,7 @@
 import asyncio
 import datetime as dt
 import importlib.util
+import json
 import re
 import unicodedata
 import uuid
@@ -177,6 +178,36 @@ def to_int(value):
         return None
 
 
+def _normalize_optional_json(value):
+    if value in {None, "", "-"}:
+        return None
+
+    parsed = value
+    for _ in range(4):
+        if isinstance(parsed, (dict, list, bool, int, float)) or parsed is None:
+            return parsed
+        if not isinstance(parsed, str):
+            return None
+
+        candidate = parsed.strip()
+        if candidate.lower() in {"", "-", "null", "none"}:
+            return None
+
+        try:
+            parsed = json.loads(candidate)
+            continue
+        except json.JSONDecodeError:
+            if candidate.startswith('"') and candidate.endswith('"'):
+                parsed = candidate[1:-1].replace('\\"', '"')
+                continue
+            if '\\"' in candidate:
+                parsed = candidate.replace('\\"', '"')
+                continue
+            return None
+
+    return None
+
+
 def build_satdump_rows(
     satellites: list[SatEntry],
     satellites_in_db: set[int],
@@ -242,7 +273,7 @@ def build_satdump_rows(
                     "source": source,
                     "iaru_coordination": "N/A",
                     "iaru_coordination_url": "",
-                    "itu_notification": '{"urls": []}',
+                    "itu_notification": {"urls": []},
                     "frequency_violation": False,
                     "unconfirmed": False,
                     "added": now,
@@ -342,7 +373,7 @@ def build_gr_rows(
                     "source": source,
                     "iaru_coordination": "N/A",
                     "iaru_coordination_url": "",
-                    "itu_notification": '{"urls": []}',
+                    "itu_notification": {"urls": []},
                     "frequency_violation": False,
                     "unconfirmed": False,
                     "added": now,
@@ -422,8 +453,17 @@ async def upsert_transmitters(
 ) -> int:
     if not rows:
         return 0
+    normalized_rows = []
+    for row in rows:
+        normalized_row = dict(row)
+        if "itu_notification" in normalized_row:
+            normalized_row["itu_notification"] = _normalize_optional_json(
+                normalized_row["itu_notification"]
+            )
+        normalized_rows.append(normalized_row)
+
     table = Transmitters.__table__
-    update_cols = [col for col in rows[0].keys() if col not in {"id", "added"}]
+    update_cols = [col for col in normalized_rows[0].keys() if col not in {"id", "added"}]
     stmt = sqlite_insert(table)
     update_values = {col: getattr(stmt.excluded, col) for col in update_cols}
     update_values["added"] = table.c.added
@@ -431,12 +471,12 @@ async def upsert_transmitters(
 
     if session is None:
         async with AsyncSessionLocal() as session:
-            await session.execute(stmt, rows)
+            await session.execute(stmt, normalized_rows)
             await session.commit()
     else:
-        await session.execute(stmt, rows)
+        await session.execute(stmt, normalized_rows)
         await session.commit()
-    return len(rows)
+    return len(normalized_rows)
 
 
 async def import_satdump_transmitters(
