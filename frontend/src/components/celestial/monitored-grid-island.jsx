@@ -31,6 +31,7 @@ import {
     setOpenGridSettingsDialog,
 } from './monitored-slice.jsx';
 import { toRowSelectionModel, toSelectedIds } from '../../utils/datagrid-selection.js';
+import { useUserTimeSettings } from '../../hooks/useUserTimeSettings.jsx';
 
 const AU_IN_KM = 149597870.7;
 const SECONDS_PER_DAY = 86400;
@@ -135,11 +136,12 @@ const formatNumeric = (value, digits = 3) => {
     return Number(value).toFixed(digits);
 };
 
-const formatLastRefresh = (value) => {
+const formatLastRefresh = (value, timezone, locale) => {
     if (!value) return 'Never';
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) return 'Unknown';
-    return parsed.toLocaleString();
+    const options = timezone ? { timeZone: timezone } : undefined;
+    return parsed.toLocaleString(locale, options);
 };
 
 const formatAge = (value, nowMs) => {
@@ -307,6 +309,7 @@ const MonitoredCelestialGridIsland = ({
     onTargetSelected = null,
 }) => {
     const dispatch = useDispatch();
+    const { timezone, locale } = useUserTimeSettings();
     const tracks = useSelector((state) => state.celestial?.celestialTracks?.celestial || []);
     const {
         selectedIds,
@@ -513,12 +516,6 @@ const MonitoredCelestialGridIsland = ({
                 minWidth: 130,
                 valueGetter: (value) => formatNumeric(value, 2),
             },
-            {
-                field: 'lastRefreshAt',
-                headerName: 'Last Refresh',
-                minWidth: 185,
-                valueGetter: (value) => formatLastRefresh(value),
-            },
             { field: 'lastRefreshAge', headerName: 'Refresh Age', minWidth: 100 },
             { field: 'projectionSpan', headerName: 'Projection Span', minWidth: 150 },
             { field: 'cacheStatus', headerName: 'Cache', minWidth: 90 },
@@ -531,8 +528,14 @@ const MonitoredCelestialGridIsland = ({
                 flex: 1.2,
                 valueGetter: (value) => value || '-',
             },
+            {
+                field: 'lastRefreshAt',
+                headerName: 'Last Refresh',
+                minWidth: 185,
+                valueGetter: (value) => formatLastRefresh(value, timezone, locale),
+            },
         ],
-        [],
+        [timezone, locale],
     );
 
     return (

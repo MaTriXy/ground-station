@@ -34,6 +34,7 @@ import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSocket } from '../common/socket.jsx';
+import { useUserTimeSettings } from '../../hooks/useUserTimeSettings.jsx';
 import {
     closeAddDialog,
     closeManageDialog,
@@ -112,7 +113,7 @@ const getStatusMeta = (entry) => {
     return { label: 'OK', color: 'success' };
 };
 
-const formatLastRefresh = (value) => {
+const formatLastRefresh = (value, timezone, locale) => {
     if (!value) {
         return 'Never';
     }
@@ -122,7 +123,8 @@ const formatLastRefresh = (value) => {
         return 'Unknown';
     }
 
-    return date.toLocaleString();
+    const options = timezone ? { timeZone: timezone } : undefined;
+    return date.toLocaleString(locale, options);
 };
 
 const normalizeHexColor = (value) => {
@@ -151,6 +153,7 @@ const CelestialTopBar = ({
 }) => {
     const dispatch = useDispatch();
     const { socket } = useSocket();
+    const { timezone, locale } = useUserTimeSettings();
     const monitoredState = useSelector((state) => state.celestialMonitored);
     const celestialLoading = useSelector((state) => state.celestial?.tracksLoading);
     const {
@@ -1018,7 +1021,7 @@ const CelestialTopBar = ({
                                                 </TableCell>
                                                 <TableCell>
                                                     <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-                                                        {formatLastRefresh(entry.lastRefreshAt)}
+                                                        {formatLastRefresh(entry.lastRefreshAt, timezone, locale)}
                                                     </Typography>
                                                     {entry.lastError ? (
                                                         <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.25 }}>
