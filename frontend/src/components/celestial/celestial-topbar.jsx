@@ -13,6 +13,7 @@ import {
     MenuItem,
     Select,
     Paper,
+    IconButton,
     Stack,
     Table,
     TableBody,
@@ -21,6 +22,7 @@ import {
     TableRow,
     TableContainer,
     TextField,
+    Tooltip,
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -28,6 +30,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ToggleOnIcon from '@mui/icons-material/ToggleOn';
+import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSocket } from '../common/socket.jsx';
 import {
@@ -184,6 +188,8 @@ const CelestialTopBar = ({
     const [selectedCatalogEntry, setSelectedCatalogEntry] = useState(null);
     const [targetInputValue, setTargetInputValue] = useState('');
     const [addFeedback, setAddFeedback] = useState('');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deleteCandidate, setDeleteCandidate] = useState(null);
     const safeSelectedCatalogEntry =
         selectedCatalogEntry && typeof selectedCatalogEntry === 'object' ? selectedCatalogEntry : null;
     const safeTargetInputValue = String(targetInputValue || '');
@@ -555,6 +561,27 @@ const CelestialTopBar = ({
         }
 
         setEditError(result.payload || result.error?.message || 'Failed to update monitored target.');
+    };
+
+    const handleRequestDelete = (entry) => {
+        setDeleteCandidate(entry || null);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!socket || !deleteCandidate?.id || celestialLoading) {
+            return;
+        }
+
+        await dispatch(
+            deleteMonitoredCelestial({
+                socket,
+                ids: [deleteCandidate.id],
+            }),
+        );
+
+        setDeleteDialogOpen(false);
+        setDeleteCandidate(null);
     };
 
     return (
@@ -932,9 +959,8 @@ const CelestialTopBar = ({
                         <Table size="small" stickyHeader>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 700, bgcolor: 'background.paper' }}>Display Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, bgcolor: 'background.paper' }}>Name</TableCell>
                                     <TableCell sx={{ fontWeight: 700, bgcolor: 'background.paper' }}>Type</TableCell>
-                                    <TableCell sx={{ fontWeight: 700, bgcolor: 'background.paper' }}>Target ID</TableCell>
                                     <TableCell sx={{ fontWeight: 700, bgcolor: 'background.paper' }}>Mission</TableCell>
                                     <TableCell sx={{ fontWeight: 700, bgcolor: 'background.paper' }}>Status</TableCell>
                                     <TableCell sx={{ fontWeight: 700, bgcolor: 'background.paper' }}>Last Refresh</TableCell>
@@ -961,18 +987,18 @@ const CelestialTopBar = ({
                                                     '& td': { py: 1.15 },
                                                 }}
                                             >
-                                                <TableCell>{entry.displayName}</TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">{entry.displayName}</Typography>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                                                        {targetType === 'body' ? entry.bodyId : entry.command}
+                                                    </Typography>
+                                                </TableCell>
                                                 <TableCell>
                                                     <Chip
                                                         size="small"
                                                         variant="outlined"
                                                         label={targetType === 'body' ? 'Body' : 'Mission'}
                                                     />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-                                                        {targetType === 'body' ? entry.bodyId : entry.command}
-                                                    </Typography>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Chip
@@ -1002,42 +1028,47 @@ const CelestialTopBar = ({
                                                 </TableCell>
                                                 <TableCell>
                                                     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                                                        <Button
-                                                            size="small"
-                                                            variant="text"
-                                                            onClick={() =>
-                                                                socket && dispatch(toggleMonitoredCelestialEnabled({
-                                                                    socket,
-                                                                    id: entry.id,
-                                                                    enabled: !entry.enabled,
-                                                                }))
-                                                            }
-                                                            disabled={!socket || celestialLoading}
-                                                        >
-                                                            {entry.enabled ? 'Enabled' : 'Disabled'}
-                                                        </Button>
-                                                        <Button
-                                                            size="small"
-                                                            startIcon={<EditIcon />}
-                                                            onClick={() => handleOpenEdit(entry)}
-                                                            disabled={!socket || celestialLoading}
-                                                        >
-                                                            Edit
-                                                        </Button>
-                                                        <Button
-                                                            size="small"
-                                                            color="error"
-                                                            startIcon={<DeleteOutlineIcon />}
-                                                            onClick={() =>
-                                                                socket && dispatch(deleteMonitoredCelestial({
-                                                                    socket,
-                                                                    ids: [entry.id],
-                                                                }))
-                                                            }
-                                                            disabled={!socket || celestialLoading}
-                                                        >
-                                                            Delete
-                                                        </Button>
+                                                        <Tooltip title={entry.enabled ? 'Disable target' : 'Enable target'}>
+                                                            <span>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    color={entry.enabled ? 'success' : 'default'}
+                                                                    onClick={() =>
+                                                                        socket && dispatch(toggleMonitoredCelestialEnabled({
+                                                                            socket,
+                                                                            id: entry.id,
+                                                                            enabled: !entry.enabled,
+                                                                        }))
+                                                                    }
+                                                                    disabled={!socket || celestialLoading}
+                                                                >
+                                                                    {entry.enabled ? <ToggleOnIcon /> : <ToggleOffIcon />}
+                                                                </IconButton>
+                                                            </span>
+                                                        </Tooltip>
+                                                        <Tooltip title="Edit">
+                                                            <span>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleOpenEdit(entry)}
+                                                                    disabled={!socket || celestialLoading}
+                                                                >
+                                                                    <EditIcon />
+                                                                </IconButton>
+                                                            </span>
+                                                        </Tooltip>
+                                                        <Tooltip title="Delete">
+                                                            <span>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    color="error"
+                                                                    onClick={() => handleRequestDelete(entry)}
+                                                                    disabled={!socket || celestialLoading}
+                                                                >
+                                                                    <DeleteOutlineIcon />
+                                                                </IconButton>
+                                                            </span>
+                                                        </Tooltip>
                                                     </Stack>
                                                 </TableCell>
                                             </TableRow>
@@ -1045,7 +1076,7 @@ const CelestialTopBar = ({
                                     })
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={7} sx={{ py: 4 }}>
+                                        <TableCell colSpan={6} sx={{ py: 4 }}>
                                             <Typography variant="body2" color="text.secondary" textAlign="center">
                                                 No monitored celestial targets yet.
                                             </Typography>
@@ -1083,6 +1114,56 @@ const CelestialTopBar = ({
                         sx={DIALOG_CANCEL_BUTTON_SX}
                     >
                         Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={() => {
+                    if (celestialLoading) return;
+                    setDeleteDialogOpen(false);
+                    setDeleteCandidate(null);
+                }}
+                maxWidth="xs"
+                fullWidth
+                PaperProps={{ sx: DIALOG_PAPER_SX }}
+            >
+                <DialogTitle sx={DIALOG_TITLE_SX}>Delete Monitored Target</DialogTitle>
+                <DialogContent sx={DIALOG_CONTENT_SX}>
+                    <Box sx={{ pt: 2 }}>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            Are you sure you want to delete this monitored target?
+                        </Typography>
+                        <Typography variant="subtitle2">
+                            {deleteCandidate?.displayName || 'Unknown target'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                            {String(deleteCandidate?.targetType || 'mission').toLowerCase() === 'body'
+                                ? (deleteCandidate?.bodyId || '-')
+                                : (deleteCandidate?.command || '-')}
+                        </Typography>
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={DIALOG_ACTIONS_SX}>
+                    <Button
+                        onClick={() => {
+                            setDeleteDialogOpen(false);
+                            setDeleteCandidate(null);
+                        }}
+                        variant="outlined"
+                        sx={DIALOG_CANCEL_BUTTON_SX}
+                        disabled={celestialLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleConfirmDelete}
+                        color="error"
+                        variant="contained"
+                        disabled={!socket || celestialLoading || !deleteCandidate?.id}
+                    >
+                        Delete
                     </Button>
                 </DialogActions>
             </Dialog>
