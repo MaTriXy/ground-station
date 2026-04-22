@@ -43,20 +43,39 @@ export const handleSetGridEditableWaterfall = function (value) {
 };
 
 export const gridLayoutStoreName = 'waterfall-view-layouts';
+const LAYOUT_SCHEMA_VERSION = 2;
 const SHARED_RESIZE_HANDLES = ['s', 'sw', 'w', 'se', 'nw', 'ne', 'e'];
 
 // load / save layouts from localStorage
 function loadLayoutsFromLocalStorage() {
     try {
         const raw = localStorage.getItem(gridLayoutStoreName);
-        return raw ? JSON.parse(raw) : null;
+        if (!raw) return null;
+
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') {
+            return null;
+        }
+
+        // Enforce new default layout by rejecting legacy/unversioned payloads.
+        if (!('version' in parsed) || !('layouts' in parsed)) {
+            return null;
+        }
+
+        return parsed.version === LAYOUT_SCHEMA_VERSION ? parsed.layouts : null;
     } catch {
         return null;
     }
 }
 
 function saveLayoutsToLocalStorage(layouts) {
-    localStorage.setItem(gridLayoutStoreName, JSON.stringify(layouts));
+    localStorage.setItem(
+        gridLayoutStoreName,
+        JSON.stringify({
+            version: LAYOUT_SCHEMA_VERSION,
+            layouts,
+        }),
+    );
 }
 
 function normalizeLayoutsResizeHandles(layouts) {
@@ -162,8 +181,11 @@ const MainLayout = React.memo(function MainLayout() {
     function handleLayoutsChange(currentLayout, allLayouts) {
         const normalizedLayouts = normalizeLayoutsResizeHandles(allLayouts);
         setLayouts(normalizedLayouts);
-        saveLayoutsToLocalStorage(normalizedLayouts);
     }
+
+    useEffect(() => {
+        saveLayoutsToLocalStorage(layouts);
+    }, [layouts]);
 
     const gridContents = useMemo(() => [
         <StyledIslandParentScrollbar key="waterfall">
