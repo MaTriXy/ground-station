@@ -463,7 +463,7 @@ class TrackerManager:
                         if sdrs.get("success") and sdrs.get("data"):
                             payload["sdr"] = sdrs["data"]
                             payload["rig_type"] = "sdr"
-            if rotator_id:
+            if rotator_id and str(rotator_id).lower() != "none":
                 if self.current_tracking_state.get("rotator_id") != rotator_id:
                     rotator_id = None
                 else:
@@ -530,7 +530,7 @@ class TrackerManager:
                             {"sdr": sdrs["data"], "rig_type": "sdr"},
                         )
 
-            if rotator_id:
+            if rotator_id and str(rotator_id).lower() != "none":
                 rotators = await crud.hardware.fetch_rotators(dbsession, rotator_id=rotator_id)
                 if rotators.get("success") and rotators.get("data"):
                     self._send_to_tracker(TRACKER_MSG_SET_HARDWARE, {"rotator": rotators["data"]})

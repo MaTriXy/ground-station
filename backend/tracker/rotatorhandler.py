@@ -134,7 +134,11 @@ class RotatorHandler:
 
     async def connect_to_rotator(self):
         """Connect to the rotator hardware."""
-        if self.tracker.current_rotator_id is not None and self.tracker.rotator_controller is None:
+        has_rotator_id = (
+            self.tracker.current_rotator_id is not None
+            and str(self.tracker.current_rotator_id).strip().lower() != "none"
+        )
+        if has_rotator_id and self.tracker.rotator_controller is None:
             try:
                 rotator_details = self.tracker.rotator_details
                 if not rotator_details:

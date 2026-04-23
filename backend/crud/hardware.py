@@ -42,6 +42,9 @@ async def fetch_rotators(
     Fetch a single rotator by its UUID or all rotators if UUID is not provided.
     """
     try:
+        if rotator_id == "none":
+            return {"success": False, "data": None, "error": "'none' was given as rotator_id"}
+
         if rotator_id is not None:
             if isinstance(rotator_id, str):
                 rotator_id = uuid.UUID(rotator_id)

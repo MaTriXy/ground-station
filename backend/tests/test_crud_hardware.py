@@ -162,6 +162,13 @@ class TestRotatorsCRUD:
         assert result["success"] is True
         assert result["data"]["id"] == rotator_id
 
+    async def test_fetch_rotator_with_none_id(self, db_session):
+        """Test fetching rotator with 'none' ID sentinel."""
+        result = await fetch_rotators(db_session, rotator_id="none")
+        assert result["success"] is False
+        assert result["data"] is None
+        assert result["error"] == "'none' was given as rotator_id"
+
     async def test_edit_rotator_success(self, db_session):
         """Test successful rotator editing."""
         add_result = await add_rotator(
