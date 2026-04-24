@@ -12,7 +12,7 @@ import {
     TextField,
 } from '@mui/material';
 import Button from '@mui/material/Button';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { submitOrEditSatellite } from './satellite-slice.jsx';
@@ -68,13 +68,29 @@ const SatelliteEditDialog = ({ open, onClose, satelliteData, onSaved }) => {
     const [submitError, setSubmitError] = useState('');
     const [submitErrorFields, setSubmitErrorFields] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [hasLocalEdits, setHasLocalEdits] = useState(false);
+    const initializedSatelliteIdRef = useRef(null);
 
     useEffect(() => {
-        if (!open) return;
-        setFormValues(normalizeSatelliteFormValues(satelliteData));
-        setSubmitError('');
-        setSubmitErrorFields({});
-    }, [open, satelliteData]);
+        if (!open) {
+            initializedSatelliteIdRef.current = null;
+            setHasLocalEdits(false);
+            return;
+        }
+
+        const normalized = normalizeSatelliteFormValues(satelliteData);
+        const incomingSatelliteId = normalized.id ?? normalized.norad_id ?? null;
+        const isDifferentSatellite = initializedSatelliteIdRef.current !== incomingSatelliteId;
+
+        // Keep form synced until the user starts typing; after that, only resync if editing another satellite.
+        if (!hasLocalEdits || isDifferentSatellite) {
+            setFormValues(normalized);
+            setSubmitError('');
+            setSubmitErrorFields({});
+            initializedSatelliteIdRef.current = incomingSatelliteId;
+            setHasLocalEdits(false);
+        }
+    }, [open, satelliteData, hasLocalEdits]);
 
     const validationErrors = useMemo(() => ({
         name: !String(formValues.name || '').trim(),
@@ -92,11 +108,13 @@ const SatelliteEditDialog = ({ open, onClose, satelliteData, onSaved }) => {
             setSubmitError('');
             setSubmitErrorFields({});
         }
+        setHasLocalEdits(true);
         setFormValues((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleCheckboxChange = (event) => {
         const { name, checked } = event.target;
+        setHasLocalEdits(true);
         setFormValues((prev) => ({ ...prev, [name]: checked }));
     };
 
