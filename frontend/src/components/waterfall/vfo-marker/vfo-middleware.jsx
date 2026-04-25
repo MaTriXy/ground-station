@@ -16,6 +16,21 @@ const BACKEND_UPDATE_DEBOUNCE_MS = 150;
 // Debounce timers for each VFO (keyed by vfoNumber)
 const debounceTimers = {};
 
+const normalizeTrackerId = (value) => {
+    if (typeof value !== 'string') {
+        return '';
+    }
+    const normalized = value.trim();
+    return normalized && normalized.toLowerCase() !== 'none' ? normalized : '';
+};
+
+const sameIdentifier = (left, right) => {
+    if (left == null || right == null) {
+        return false;
+    }
+    return String(left) === String(right);
+};
+
 // Debounced dispatcher for backend updates
 const debouncedBackendUpdate = (store, vfoNumber, updateFn) => {
     // Clear existing timer for this VFO
@@ -142,7 +157,9 @@ const backendSyncMiddleware = (store) => (next) => (action) => {
             if (vfoState && vfoState.lockedTransmitterId && vfoState.lockedTransmitterId !== 'none') {
                 // VFO is locked - immediately calculate and send new frequency with offset
                 const transmitters = state.targetSatTrack.rigData.transmitters || [];
-                const transmitter = transmitters.find(tx => tx.id === vfoState.lockedTransmitterId);
+                const transmitter = transmitters.find(tx =>
+                    sameIdentifier(tx.id, vfoState.lockedTransmitterId)
+                );
 
                 if (transmitter && transmitter.downlink_observed_freq) {
                     const newOffset = updates.frequencyOffset;
@@ -304,6 +321,14 @@ const backendSyncMiddleware = (store) => (next) => (action) => {
 
     // Handle satellite tracking data updates - track doppler-corrected frequencies for locked VFOs
     if (action.type === 'targetSatTrack/setSatelliteData') {
+        const incomingTrackerId = normalizeTrackerId(action.payload?.tracker_id);
+        const activeTrackerId = normalizeTrackerId(state.targetSatTrack?.trackerId);
+
+        // Ignore updates from non-active tracker slots. Lock state follows only the selected tracker.
+        if (incomingTrackerId && activeTrackerId && incomingTrackerId !== activeTrackerId) {
+            return result;
+        }
+
         const rigData = action.payload?.rig_data;
         const satelliteData = action.payload?.satellite_data;
 
@@ -317,7 +342,11 @@ const backendSyncMiddleware = (store) => (next) => (action) => {
             const previousNoradId = state.targetSatTrack.satelliteData.details.norad_id;
 
             // Check if the satellite has changed (different NORAD ID)
-            if (currentNoradId && previousNoradId && currentNoradId !== previousNoradId) {
+            if (
+                currentNoradId != null &&
+                previousNoradId != null &&
+                String(currentNoradId) !== String(previousNoradId)
+            ) {
                 const vfoMarkers = state.vfo.vfoMarkers;
 
                 console.log(`Satellite changed from ${previousNoradId} to ${currentNoradId} - unlocking all VFOs`);
@@ -356,7 +385,9 @@ const backendSyncMiddleware = (store) => (next) => (action) => {
                 // Only update if VFO is locked to a transmitter
                 if (vfo.lockedTransmitterId && vfo.lockedTransmitterId !== 'none') {
                     // Find the transmitter this VFO is locked to
-                    const transmitter = rigData.transmitters.find(tx => tx.id === vfo.lockedTransmitterId);
+                    const transmitter = rigData.transmitters.find(tx =>
+                        sameIdentifier(tx.id, vfo.lockedTransmitterId)
+                    );
 
                     // This handles edge cases where transmitter data becomes unavailable for reasons other
                     // than satellite changes (e.g., transmitter disabled, data corruption, etc.)

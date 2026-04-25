@@ -27,6 +27,13 @@ import TuneIcon from '@mui/icons-material/Tune';
 import { useTranslation } from 'react-i18next';
 import { getFrequencyBand } from '../../common/common.jsx';
 
+const sameIdentifier = (left, right) => {
+    if (left == null || right == null) {
+        return false;
+    }
+    return String(left) === String(right);
+};
+
 /**
  * Transmitter Lock Select Component
  */
@@ -111,7 +118,7 @@ export const TransmitterLockSelect = ({
     const currentValue = (() => {
         if (!lockedTransmitterId || lockedTransmitterId === 'none') return 'none';
         // Check if the current value exists in the transmitters list
-        const exists = transmitters.some(tx => tx.id === lockedTransmitterId);
+        const exists = transmitters.some(tx => sameIdentifier(tx.id, lockedTransmitterId));
         return exists ? lockedTransmitterId : 'none';
     })();
 
