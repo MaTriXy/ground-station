@@ -66,6 +66,11 @@ const HardwareSettingsPopover = () => {
     const trackerCommandsById = useSelector((state) => state.targetSatTrack?.trackerCommandsById || {});
     const rotators = useSelector((state) => state.rotators?.rotators || []);
     const rigs = useSelector((state) => state.rigs?.rigs || []);
+    const latestActiveTrackerIdRef = useRef(trackerId);
+
+    useEffect(() => {
+        latestActiveTrackerIdRef.current = trackerId;
+    }, [trackerId]);
     const hasConfiguredTargets = React.useMemo(() => {
         const instances = Array.isArray(trackerInstances) ? trackerInstances : [];
         if (instances.length === 0) return false;
@@ -312,8 +317,8 @@ const HardwareSettingsPopover = () => {
 
     const submitQuickAction = useCallback(async (row, nextState) => {
         if (!row?.trackerId) return;
+        const previouslyActiveTrackerId = latestActiveTrackerIdRef.current;
         setRowErrors((prev) => ({ ...prev, [row.trackerId]: null }));
-        dispatch(setTrackerId(row.trackerId));
         try {
             await dispatch(setTrackingStateInBackend({
                 socket,
@@ -334,6 +339,17 @@ const HardwareSettingsPopover = () => {
                     return next;
                 });
             }, 4000);
+        } finally {
+            // Preserve the user's active target when issuing per-row quick actions.
+            // The tracking-state thunk sets trackerId to the command's target tracker; restore
+            // only if selection is still on that row to avoid overriding explicit user changes.
+            if (
+                previouslyActiveTrackerId
+                && previouslyActiveTrackerId !== row.trackerId
+                && latestActiveTrackerIdRef.current === row.trackerId
+            ) {
+                dispatch(setTrackerId(previouslyActiveTrackerId));
+            }
         }
     }, [dispatch, socket]);
 
