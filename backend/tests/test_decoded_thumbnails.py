@@ -41,6 +41,18 @@ def test_generate_decoded_thumbnail_creates_expected_file(tmp_path):
         assert thumb.size == (960, 540)
 
 
+def test_select_decoded_thumbnail_source_prefers_filled_folder(tmp_path):
+    folder = tmp_path / "METEOR-M2_4_20260114_185724.satdump_meteor_m2-x_lrpt"
+    non_filled = folder / "products" / "quicklook_projected.png"
+    filled = folder / "filled" / "quicklook_projected.png"
+    _write_png(non_filled)
+    _write_png(filled)
+
+    selected = select_decoded_thumbnail_source(folder)
+
+    assert selected == filled
+
+
 def test_get_decoded_thumbnail_url_lazily_generates_thumbnail(tmp_path):
     folder = tmp_path / "METEOR-M2_4_20260114_185724.satdump_meteor_m2-x_lrpt"
     _write_png(folder / "result_map.png")

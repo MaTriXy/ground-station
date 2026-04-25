@@ -22,25 +22,50 @@ def select_decoded_thumbnail_source(decoded_folder: Path) -> Optional[Path]:
     if not png_files:
         return None
 
+    filled_pngs = [path for path in png_files if "filled" in [part.lower() for part in path.parts]]
+
     exact_preferred = [
         path
         for path in png_files
         if path.name.lower() == "rgb_msu_mr_rgb_avhrr_3a21_false_color_projected.png"
     ]
+    exact_preferred_filled = [
+        path for path in exact_preferred if "filled" in [part.lower() for part in path.parts]
+    ]
+    if exact_preferred_filled:
+        return exact_preferred_filled[0]
     if exact_preferred:
         return exact_preferred[0]
 
     projected = [path for path in png_files if "_projected" in path.name.lower()]
+    projected_filled = [
+        path for path in projected if "filled" in [part.lower() for part in path.parts]
+    ]
+    if projected_filled:
+        return projected_filled[0]
     if projected:
         return projected[0]
 
     map_images = [path for path in png_files if path.name.lower().endswith("_map.png")]
+    map_images_filled = [
+        path for path in map_images if "filled" in [part.lower() for part in path.parts]
+    ]
+    if map_images_filled:
+        return map_images_filled[0]
     if map_images:
         return map_images[0]
 
     rgb_images = [path for path in png_files if "rgb" in str(path).lower()]
+    rgb_images_filled = [
+        path for path in rgb_images if "filled" in [part.lower() for part in path.parts]
+    ]
+    if rgb_images_filled:
+        return rgb_images_filled[0]
     if rgb_images:
         return rgb_images[0]
+
+    if filled_pngs:
+        return filled_pngs[0]
 
     return png_files[0]
 
