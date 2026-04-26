@@ -25,7 +25,11 @@ const FleetTargetRow = React.memo(function FleetTargetRow({
                 border: '1px solid',
                 borderColor: isActive ? 'primary.main' : 'divider',
                 borderRadius: 1,
-                backgroundColor: isActive ? 'action.hover' : 'transparent',
+                backgroundColor: isActive ? 'action.hover' : 'background.elevated',
+                transition: 'background-color 0.2s ease',
+                '&:hover': {
+                    backgroundColor: isActive ? 'action.hover' : 'overlay.light',
+                },
             }}
         >
             <Stack direction="row" spacing={0.6} alignItems="center" useFlexGap flexWrap="wrap">
