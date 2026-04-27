@@ -19,10 +19,10 @@ This project was built with the help of Claude Code and Codex.
 
 ---
 
-### Satellite Tracking Console
-<img src="frontend/public/ground station - tracking console.png" alt="Satellite tracking console" width="450"/>
+### Multi-Target Tracking Console
+<img src="frontend/public/ground station - tracking console - multitargets - iss.png" alt="Multi-target tracking console focused on ISS" width="450"/>
 
-*Dedicated tracking interface for the targeted satellite showing orbital parameters, pass predictions, and real-time position data*
+*Multi-target tracking console view showing an active ISS target with per-target control and live tracking telemetry*
 
 ---
 
