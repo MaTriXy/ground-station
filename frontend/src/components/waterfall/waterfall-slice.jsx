@@ -254,6 +254,11 @@ const initialState = {
     },
     hasSoapyAgc: false,
     selectedAntenna: 'none',
+    startStreamValidationErrors: {
+        gain: false,
+        sampleRate: false,
+        antenna: false,
+    },
     bookmarks: [],
     showRotatorDottedLines: true,
     autoScalePreset: 'weak',
@@ -496,6 +501,28 @@ export const waterfallSlice = createSlice({
         },
         setSelectedAntenna(state, action) {
             state.selectedAntenna = action.payload;
+        },
+        setStartStreamValidationErrors(state, action) {
+            const payload = action.payload || {};
+            state.startStreamValidationErrors = {
+                gain: Boolean(payload.gain),
+                sampleRate: Boolean(payload.sampleRate),
+                antenna: Boolean(payload.antenna),
+            };
+        },
+        clearStartStreamValidationErrors(state) {
+            state.startStreamValidationErrors = {
+                gain: false,
+                sampleRate: false,
+                antenna: false,
+            };
+        },
+        clearStartStreamValidationError(state, action) {
+            const field = action.payload;
+            if (!['gain', 'sampleRate', 'antenna'].includes(field)) {
+                return;
+            }
+            state.startStreamValidationErrors[field] = false;
         },
         setHasSoapyAgc(state, action) {
             state.hasSoapyAgc = action.payload;
@@ -741,6 +768,9 @@ export const {
     setShowLeftSideWaterFallAccessories,
     setBookMarks,
     setSelectedAntenna,
+    setStartStreamValidationErrors,
+    clearStartStreamValidationErrors,
+    clearStartStreamValidationError,
     setHasSoapyAgc,
     setSelectedTransmitterId,
     setSelectedOffsetMode,

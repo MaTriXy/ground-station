@@ -10,6 +10,7 @@ import {
     Box,
     FormControl,
     FormControlLabel,
+    FormHelperText,
     IconButton,
     InputLabel,
     ListSubheader,
@@ -58,12 +59,19 @@ const SdrAccordion = ({
                           onRtlAgcChange,
                           onGainElementChange,
                           isRecording,
+                          startStreamValidationErrors,
 }) => {
     const { t } = useTranslation('waterfall');
     const selectedCapabilities = sdrCapabilities?.[selectedSDRId] || null;
     const biasTSupported = hasBiasT || selectedCapabilities?.bias_t?.supported;
-    const clockSourceOptions = selectedCapabilities?.clock_sources || [];
-    const timeSourceOptions = selectedCapabilities?.time_sources || [];
+    const isNoneSourceOption = (source) =>
+        typeof source === 'string' && source.trim().toLowerCase() === 'none';
+    const clockSourceOptions = Array.isArray(selectedCapabilities?.clock_sources)
+        ? selectedCapabilities.clock_sources.filter((source) => !isNoneSourceOption(source))
+        : [];
+    const timeSourceOptions = Array.isArray(selectedCapabilities?.time_sources)
+        ? selectedCapabilities.time_sources.filter((source) => !isNoneSourceOption(source))
+        : [];
     const selectedClockSource =
         sdrSettings?.clockSource ?? selectedCapabilities?.clock_source ?? 'none';
     const selectedTimeSource =
@@ -144,6 +152,10 @@ const SdrAccordion = ({
         }
         return options;
     };
+
+    const gainRequiredError = Boolean(startStreamValidationErrors?.gain);
+    const sampleRateRequiredError = Boolean(startStreamValidationErrors?.sampleRate);
+    const antennaRequiredError = Boolean(startStreamValidationErrors?.antenna);
 
     return (
         <Accordion expanded={expanded} onChange={onAccordionChange}>
@@ -236,6 +248,7 @@ const SdrAccordion = ({
                         </FormControl>
 
                         <FormControl disabled={gettingSDRParameters || (selectedSDRId === 'sigmf-playback' && isStreaming)}
+                                     error={gainRequiredError}
                                      sx={{minWidth: 200, marginTop: 0, marginBottom: 1}}
                                      fullWidth={true}
                                      variant="outlined" size="small">
@@ -255,6 +268,11 @@ const SdrAccordion = ({
                                     </MenuItem>
                                 ))}
                             </Select>
+                            {gainRequiredError && (
+                                <FormHelperText>
+                                    {t('sdr.gain_required', { defaultValue: 'Select gain before starting stream' })}
+                                </FormHelperText>
+                            )}
                         </FormControl>
                         {filteredGainRangeEntries.length > 0 && (
                             <Box sx={{mb: 1, display: 'grid', gap: 1}}>
@@ -292,7 +310,7 @@ const SdrAccordion = ({
                                                 }}
                                             >
                                                 <MenuItem value="none">
-                                                    [not configurable]
+                                                    [not configured]
                                                 </MenuItem>
                                                 {options.map((option) => (
                                                     <MenuItem key={`${name}-${option}`} value={option}>
@@ -306,6 +324,7 @@ const SdrAccordion = ({
                             </Box>
                         )}
                         <FormControl disabled={gettingSDRParameters || isRecording || (selectedSDRId === 'sigmf-playback' && isStreaming)}
+                                     error={sampleRateRequiredError}
                                      sx={{minWidth: 200, marginTop: 0, marginBottom: 1}}
                                      fullWidth={true}
                                      variant="outlined" size="small">
@@ -334,8 +353,14 @@ const SdrAccordion = ({
                                     );
                                 })}
                             </Select>
+                            {sampleRateRequiredError && (
+                                <FormHelperText>
+                                    {t('sdr.sample_rate_required', { defaultValue: 'Select sample rate before starting stream' })}
+                                </FormHelperText>
+                            )}
                         </FormControl>
                         <FormControl disabled={gettingSDRParameters || isRecording || (selectedSDRId === 'sigmf-playback' && isStreaming)}
+                                     error={antennaRequiredError}
                                      sx={{minWidth: 200, marginTop: 0, marginBottom: 1}}
                                      fullWidth={true}
                                      variant="outlined" size="small">
@@ -355,6 +380,11 @@ const SdrAccordion = ({
                                     </MenuItem>
                                 ))}
                             </Select>
+                            {antennaRequiredError && (
+                                <FormHelperText>
+                                    {t('sdr.antenna_required', { defaultValue: 'Select antenna before starting stream' })}
+                                </FormHelperText>
+                            )}
                         </FormControl>
                         {clockSourceOptions.length > 0 && (
                             <FormControl
@@ -380,7 +410,7 @@ const SdrAccordion = ({
                                     onChange={(e) => onClockSourceChange?.(e.target.value)}
                                 >
                                     <MenuItem value="none">
-                                        None
+                                        [not configured]
                                     </MenuItem>
                                     {clockSourceOptions.map((source) => (
                                         <MenuItem key={source} value={source}>
@@ -414,7 +444,7 @@ const SdrAccordion = ({
                                     onChange={(e) => onTimeSourceChange?.(e.target.value)}
                                 >
                                     <MenuItem value="none">
-                                        None
+                                        [not configured]
                                     </MenuItem>
                                     {timeSourceOptions.map((source) => (
                                         <MenuItem key={source} value={source}>
@@ -636,7 +666,8 @@ function areSdrAccordionPropsEqual(prevProps, nextProps) {
         prevProps.rtlAgc === nextProps.rtlAgc &&
         prevProps.onRtlAgcChange === nextProps.onRtlAgcChange &&
         prevProps.onGainElementChange === nextProps.onGainElementChange &&
-        prevProps.isRecording === nextProps.isRecording
+        prevProps.isRecording === nextProps.isRecording &&
+        prevProps.startStreamValidationErrors === nextProps.startStreamValidationErrors
     );
 }
 

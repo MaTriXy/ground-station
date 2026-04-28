@@ -76,6 +76,8 @@ import {
     clearPlaybackRecording,
     setPlaybackStartTime,
     resetPlaybackStartTime,
+    clearStartStreamValidationErrors,
+    clearStartStreamValidationError,
 } from './waterfall-slice.jsx';
 
 import {
@@ -150,6 +152,7 @@ const WaterfallSettings = forwardRef(function WaterfallSettings({ playbackRemain
         selectedPlaybackRecording,
         playbackRecordingPath,
         playbackStartTime,
+        startStreamValidationErrors,
     } = useSelector(
         (state) => ({
             colorMap: state.waterfall.colorMap,
@@ -197,6 +200,7 @@ const WaterfallSettings = forwardRef(function WaterfallSettings({ playbackRemain
             selectedPlaybackRecording: state.waterfall.selectedPlaybackRecording,
             playbackRecordingPath: state.waterfall.playbackRecordingPath,
             playbackStartTime: state.waterfall.playbackStartTime,
+            startStreamValidationErrors: state.waterfall.startStreamValidationErrors,
         }),
         shallowEqual
     );
@@ -460,6 +464,7 @@ const WaterfallSettings = forwardRef(function WaterfallSettings({ playbackRemain
         // Check what was selected
         const selectedValue = typeof event === 'object' ? event.target.value : event;
 
+        dispatch(clearStartStreamValidationErrors());
         dispatch(setSelectedSDRId(selectedValue));
         if (selectedValue && selectedValue !== "none") {
             const defaultPercent = getDefaultFFTOverlapPercentForSDR();
@@ -708,16 +713,25 @@ const WaterfallSettings = forwardRef(function WaterfallSettings({ playbackRemain
 
     const handleGainChange = useCallback((value) => {
         dispatch(setGain(value));
+        if (value !== 'none' && value !== null && value !== undefined) {
+            dispatch(clearStartStreamValidationError('gain'));
+        }
         sendSDRConfigToBackend({gain: value});
     }, [dispatch, sendSDRConfigToBackend]);
 
     const handleSampleRateChange = useCallback((value) => {
         dispatch(setSampleRate(value));
+        if (value !== 'none' && value !== null && value !== undefined) {
+            dispatch(clearStartStreamValidationError('sampleRate'));
+        }
         sendSDRConfigToBackend({sampleRate: value});
     }, [dispatch, sendSDRConfigToBackend]);
 
     const handleAntennaChange = useCallback((value) => {
         dispatch(setSelectedAntenna(value));
+        if (value !== 'none' && value !== null && value !== undefined) {
+            dispatch(clearStartStreamValidationError('antenna'));
+        }
         sendSDRConfigToBackend({antenna: value});
     }, [dispatch, sendSDRConfigToBackend]);
 
@@ -1240,6 +1254,7 @@ const WaterfallSettings = forwardRef(function WaterfallSettings({ playbackRemain
                     rtlAgc={rtlAgc}
                     onRtlAgcChange={handleRtlAgcChange}
                     isRecording={isRecording}
+                    startStreamValidationErrors={startStreamValidationErrors}
                 />
 
                 <FrequencyControlAccordion

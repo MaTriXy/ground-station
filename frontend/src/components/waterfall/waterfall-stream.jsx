@@ -3,17 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useSocket } from '../common/socket.jsx';
 import { useWaterfallEngine } from './waterfall-engine-provider.jsx';
 import {
-    setCenterFrequency,
-    setSampleRate,
-    setGain,
-    setFFTSize,
-    setFFTWindow,
-    setFFTAveraging,
     setIsStreaming,
     setErrorMessage,
-    setErrorDialogOpen,
     setStartStreamingLoading,
     setFFTdataOverflow,
+    setExpandedPanels,
+    setStartStreamValidationErrors,
+    clearStartStreamValidationErrors,
     stopRecording
 } from './waterfall-slice.jsx';
 import { toast } from '../../utils/toast-with-timestamp.jsx';
@@ -50,6 +46,7 @@ const useWaterfallStream = ({
         autoDBRange,
         playbackRecordingPath,
         isRecording,
+        expandedPanels,
     } = useSelector((state) => state.waterfall);
 
     const biasT = sdrSettingsById?.[selectedSDRId]?.draft?.biasT ?? false;
@@ -163,6 +160,17 @@ const useWaterfallStream = ({
         }
     }, [isStreaming, cancelAnimations]);
 
+    const isUnsetSelection = useCallback((value) => {
+        if (value === null || value === undefined) {
+            return true;
+        }
+        if (typeof value === 'string') {
+            const normalized = value.trim().toLowerCase();
+            return normalized === '' || normalized === 'none';
+        }
+        return false;
+    }, []);
+
     const startStreaming = useCallback(() => {
         if (!isStreaming) {
             // Toolbar play button should only handle real SDRs, not SigmfPlayback
@@ -171,6 +179,21 @@ const useWaterfallStream = ({
                 return;
             }
 
+            const validationErrors = {
+                gain: isUnsetSelection(gain),
+                sampleRate: isUnsetSelection(sampleRate),
+                antenna: isUnsetSelection(selectedAntenna),
+            };
+            if (validationErrors.gain || validationErrors.sampleRate || validationErrors.antenna) {
+                dispatch(setStartStreamValidationErrors(validationErrors));
+                if (!expandedPanels.includes('sdr')) {
+                    dispatch(setExpandedPanels([...expandedPanels, 'sdr']));
+                }
+                toast.error('Select gain, sample rate, and antenna before starting stream');
+                return;
+            }
+
+            dispatch(clearStartStreamValidationErrors());
             dispatch(setStartStreamingLoading(true));
             dispatch(setErrorMessage(''));
 
@@ -215,7 +238,7 @@ const useWaterfallStream = ({
                 }
             });
         }
-    }, [isStreaming, dispatch, socket, selectedSDRId, centerFrequency, sampleRate, gain, fftSize, biasT, tunerAgc, rtlAgc, fftWindow, fftOverlapPercent, fftOverlapDepth, selectedAntenna, selectedOffsetValue, soapyAgc, fftAveraging, getAudioState, initializeAudio]);
+    }, [isStreaming, dispatch, socket, selectedSDRId, centerFrequency, sampleRate, gain, fftSize, biasT, tunerAgc, rtlAgc, fftWindow, fftOverlapPercent, fftOverlapDepth, selectedAntenna, selectedOffsetValue, soapyAgc, fftAveraging, getAudioState, initializeAudio, isUnsetSelection, expandedPanels]);
 
     const stopStreaming = useCallback(async () => {
         if (isStreaming) {
@@ -253,9 +276,8 @@ const useWaterfallStream = ({
         const noSDRSelected = selectedSDRId === 'none';
         const isSigmfPlayback = selectedSDRId === 'sigmf-playback';
         const isLoadingParameters = gettingSDRParameters;
-        const missingRequiredParameters = !sampleRate || gain === null || gain === undefined || sampleRate === 'none' || gain === 'none' || selectedAntenna === 'none';
-        return isStreamingActive || noSDRSelected || isSigmfPlayback || isLoadingParameters || missingRequiredParameters;
-    }, [isStreaming, selectedSDRId, gettingSDRParameters, sampleRate, gain, selectedAntenna]);
+        return isStreamingActive || noSDRSelected || isSigmfPlayback || isLoadingParameters;
+    }, [isStreaming, selectedSDRId, gettingSDRParameters]);
 
     return { startStreaming, stopStreaming, playButtonEnabledOrNot };
 };
