@@ -133,6 +133,7 @@ class TrackerHandler:
             tracking_enabled = bool(rotator_config.get("tracking_enabled"))
             transmitter_id = self._extract_transmitter_id(tasks)
             rotator_id = rotator_config.get("id") if has_rotator else None
+            satellite_name = str(satellite.get("name") or norad_id).strip() or str(norad_id)
 
             # Reuse existing target owner when available. Otherwise, use a dedicated
             # observation-scoped tracker slot that will be removed after the pass.
@@ -209,8 +210,15 @@ class TrackerHandler:
             tracking_reply: Dict[str, Any] = await update_tracking_state_with_ownership(
                 tracker_id=tracker_id,
                 value={
+                    # Observation hijack must fully retarget tracker identity, not only NORAD.
+                    # If command/body fields are left behind, the UI can keep rendering the
+                    # previous mission/body identity for this slot.
+                    "target_type": "satellite",
+                    "target_name": satellite_name,
                     "norad_id": norad_id,
                     "group_id": satellite.get("group_id"),
+                    "command": None,
+                    "body_id": None,
                     "rotator_state": requested_rotator_state,
                     "rotator_id": requested_rotator_id,
                     "rig_state": "disconnected",  # Observations don't use rig for now
