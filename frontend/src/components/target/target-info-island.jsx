@@ -242,9 +242,9 @@ const TargetInfoIsland = () => {
     const nonSatelliteProjection = nonSatelliteTrack?.orbit_sampling || {};
     const nonSatelliteLastRefresh = monitoredTarget?.lastRefreshAt || monitoredTarget?.last_refresh_at || null;
     const nonSatelliteHasRealtime = Number.isFinite(nonSatelliteAzimuth) || Number.isFinite(nonSatelliteElevation);
-    const satelliteAltitudeKm = Number(satelliteData?.position?.alt);
+    const satelliteAltitudeMeters = Number(satelliteData?.position?.alt);
     const satelliteVelocityKmS = Number(satelliteData?.position?.vel);
-    const satelliteAltitudeMi = Number.isFinite(satelliteAltitudeKm) ? satelliteAltitudeKm * KM_TO_MI : NaN;
+    const satelliteAltitudeMi = Number.isFinite(satelliteAltitudeMeters) ? satelliteAltitudeMeters / 1609.34 : NaN;
     const satelliteVelocityMiS = Number.isFinite(satelliteVelocityKmS) ? satelliteVelocityKmS * KM_TO_MI : NaN;
     const satelliteElevation = Number(satelliteData?.position?.el);
     const satelliteVisible = Number.isFinite(satelliteElevation) ? satelliteElevation > 0 : null;
