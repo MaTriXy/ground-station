@@ -190,13 +190,20 @@ async def search_targets(
             if norad_id is None:
                 continue
             name = str(satellite.get("name") or norad_id).strip()
+            # Keep alias fields in the unified payload so frontend-side filtering
+            # can still match queries that hit DB alias columns (e.g. name_other).
+            name_other = str(satellite.get("name_other") or "").strip()
+            alternative_name = str(satellite.get("alternative_name") or "").strip()
             results.append(
                 {
                     "id": f"satellite:{norad_id}",
                     "target_type": "satellite",
                     "target_name": name,
+                    "name": name,
                     "target_identifier": str(norad_id),
                     "norad_id": norad_id,
+                    "name_other": name_other,
+                    "alternative_name": alternative_name,
                     "groups": satellite.get("groups") or [],
                     "transmitters": satellite.get("transmitters") or [],
                 }

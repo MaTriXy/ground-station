@@ -21,7 +21,6 @@ import {useDispatch, useSelector} from "react-redux";
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
-    betterStatusValue,
     getClassNamesBasedOnGridEditing,
     humanizeAltitude,
     humanizeDate,
@@ -30,7 +29,6 @@ import {
     humanizeVelocity,
     getFrequencyBand,
     getBandColor,
-    renderCountryFlagsCSV,
     TitleBar
 } from "../common/common.jsx";
 import {
@@ -576,8 +574,17 @@ const TargetInfoIsland = () => {
                 borderBottom: '1px solid',
                 borderColor: 'border.main'
             }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(0, 1fr) 72px',
+                        gridTemplateRows: 'auto auto',
+                        columnGap: 1,
+                        rowGap: 0.75,
+                        alignItems: 'center',
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                         <Box sx={{
                             width: 10,
                             height: 10,
@@ -623,16 +630,34 @@ const TargetInfoIsland = () => {
                             </Box>
                         </Box>
                     </Box>
-                    {satelliteData && satelliteData['details'] && (
-                        <Box sx={{ ml: 1, flexShrink: 0 }}>
-                            {betterStatusValue(satelliteData['details']['status'])}
-                        </Box>
-                    )}
-                </Box>
 
-                <Grid container spacing={0.5}>
-                    <Grid size={hasOperator ? 2.5 : 3}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5, py: 0.3, bgcolor: 'overlay.main', borderRadius: 0.5 }}>
+                    <Box
+                        sx={{
+                            gridRow: '1 / span 2',
+                            gridColumn: 2,
+                            alignSelf: 'stretch',
+                            justifySelf: 'stretch',
+                            width: '100%',
+                            height: '100%',
+                            minHeight: 52,
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                        }}
+                    >
+                        <BodyIcon
+                            targetType="satellite"
+                            bodyId={selectedNoradId}
+                            size="100%"
+                            alt={selectedSatelliteName || 'Satellite'}
+                            sx={{ position: 'absolute', inset: 0, margin: 'auto', width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                    </Box>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, overflow: 'hidden' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5, py: 0.3, bgcolor: 'overlay.main', borderRadius: 0.5, minWidth: 0 }}>
                             {satelliteVisible === true ? (
                                 <CheckCircleIcon sx={{ fontSize: 11, mr: 0.4, color: 'success.main' }} />
                             ) : satelliteVisible === false ? (
@@ -644,9 +669,7 @@ const TargetInfoIsland = () => {
                                 {satelliteVisibilityLabel}
                             </Typography>
                         </Box>
-                    </Grid>
-                    <Grid size={hasOperator ? 4 : 6}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5, py: 0.3, bgcolor: 'overlay.main', borderRadius: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5, py: 0.3, bgcolor: 'overlay.main', borderRadius: 0.5, minWidth: 0, flex: 1 }}>
                             <AccessTimeIcon sx={{ fontSize: 11, mr: 0.4, color: 'text.secondary' }} />
                             <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.68rem' }} noWrap>
                                 {satellitePassInfo && satelliteCountdown
@@ -654,28 +677,16 @@ const TargetInfoIsland = () => {
                                     : 'No upcoming pass'}
                             </Typography>
                         </Box>
-                    </Grid>
-                    {hasOperator && (
-                        <Grid size={2.5}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5, py: 0.3, bgcolor: 'overlay.main', borderRadius: 0.5 }}>
+                        {hasOperator && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5, py: 0.3, bgcolor: 'overlay.main', borderRadius: 0.5, minWidth: 0 }}>
                                 <BusinessIcon sx={{ fontSize: 11, mr: 0.4, color: 'text.secondary' }} />
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.68rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {satelliteData['details']['operator']}
                                 </Typography>
                             </Box>
-                        </Grid>
-                    )}
-                    <Grid size={3}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: 0.5, py: 0.3, bgcolor: 'overlay.main', borderRadius: 0.5 }}>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.68rem', whiteSpace: 'nowrap' }}>
-                                {satelliteData && satelliteData['details'] && satelliteData['details']['countries'] ?
-                                    renderCountryFlagsCSV(satelliteData['details']['countries']) :
-                                    'N/A'
-                                }
-                            </Typography>
-                        </Box>
-                    </Grid>
-                </Grid>
+                        )}
+                    </Box>
+                </Box>
             </Box>
 
             {/* Main Content */}

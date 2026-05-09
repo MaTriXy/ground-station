@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 
 const BODY_BASE_URL = '/body-icons';
 const MISSION_BASE_URL = '/mission-icons';
+const SATELLITE_BASE_URL = '/satimages';
 
 const BODY_ICON_FILE_BY_ID = Object.freeze({
     sun: 'sun-sphere-icon.png',
@@ -136,6 +137,16 @@ const normalizeMissionKey = (value) => String(value || '')
     .replace(/^mission:/, '')
     .replace(/[_\s]+/g, '-');
 
+const normalizeSatelliteId = (value) => {
+    const raw = String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/^satellite:/, '')
+        .replace(/^norad:/, '');
+    const digits = raw.match(/\d+/g);
+    return digits ? digits.join('') : '';
+};
+
 const resolveBodyIconPath = (bodyId, size) => {
     const normalized = normalizeBodyId(bodyId);
     const filename = BODY_ICON_FILE_BY_ID[normalized] || BODY_ICON_FILE_BY_ID.moon;
@@ -149,6 +160,18 @@ const resolveMissionIconPath = (missionKey, size) => {
     return `${MISSION_BASE_URL}/${resolvePreset(size)}/${filename}`;
 };
 
+const resolveSatelliteIconPath = (satelliteId, size) => {
+    const normalized = normalizeSatelliteId(satelliteId);
+    if (!normalized) return '';
+    return `${SATELLITE_BASE_URL}/${resolvePreset(size)}/${normalized}.png`;
+};
+
+const resolveSatelliteFallbackPath = (satelliteId) => {
+    const normalized = normalizeSatelliteId(satelliteId);
+    if (!normalized) return '';
+    return `${SATELLITE_BASE_URL}/${normalized}.png`;
+};
+
 const BodyIcon = ({
     targetType = 'body',
     bodyId = '',
@@ -157,16 +180,23 @@ const BodyIcon = ({
     sx = {},
 }) => {
     const normalizedTargetType = String(targetType || '').toLowerCase();
-    const path = normalizedTargetType === 'body'
+    const primaryPath = normalizedTargetType === 'body'
         ? resolveBodyIconPath(bodyId, size)
-        : (normalizedTargetType === 'mission' ? resolveMissionIconPath(bodyId, size) : '');
-    const iconSize = Number.isFinite(Number(size)) ? Number(size) : 24;
+        : (normalizedTargetType === 'mission'
+            ? resolveMissionIconPath(bodyId, size)
+            : (normalizedTargetType === 'satellite' ? resolveSatelliteIconPath(bodyId, size) : ''));
+    const fallbackPath = normalizedTargetType === 'satellite' ? resolveSatelliteFallbackPath(bodyId) : '';
+    const numericSize = Number(size);
+    const iconSize = Number.isFinite(numericSize) ? numericSize : (size || 24);
     const [failed, setFailed] = React.useState(false);
+    const [usingFallback, setUsingFallback] = React.useState(false);
+    const path = usingFallback ? fallbackPath : primaryPath;
 
     // Reset broken-image state when switching target.
     React.useEffect(() => {
         setFailed(false);
-    }, [path]);
+        setUsingFallback(false);
+    }, [primaryPath, fallbackPath]);
 
     if (!path || failed) return null;
 
@@ -176,12 +206,20 @@ const BodyIcon = ({
             src={path}
             alt={alt}
             loading="lazy"
-            onError={() => setFailed(true)}
+            onError={() => {
+                // Satellite icons first try the normalized icon set, then fall back to the
+                // legacy /satimages/{norad}.png source used in satellite info pages.
+                if (!usingFallback && fallbackPath && fallbackPath !== primaryPath) {
+                    setUsingFallback(true);
+                    return;
+                }
+                setFailed(true);
+            }}
             sx={{
                 width: iconSize,
                 height: iconSize,
-                borderRadius: '50%',
-                objectFit: normalizedTargetType === 'mission' ? 'contain' : 'cover',
+                borderRadius: normalizedTargetType === 'body' ? '50%' : 0,
+                objectFit: normalizedTargetType === 'body' ? 'cover' : 'contain',
                 flexShrink: 0,
                 ...sx,
             }}

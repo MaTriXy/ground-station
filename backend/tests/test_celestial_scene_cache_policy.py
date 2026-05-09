@@ -262,3 +262,127 @@ async def test_get_vectors_snapshot_cache_only_falls_back_to_latest_command(monk
     assert result["cache"] == "db-cache-only-command-hit"
     assert result["stale"] is False
     assert result["payload"]["command"] == "Voyager 1"
+
+
+@pytest.mark.asyncio
+async def test_get_vectors_snapshot_force_refresh_uses_latest_on_fetch_failure(monkeypatch):
+    epoch = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+    payload = {
+        "command": "Voyager 1",
+        "position_xyz_au": [1.0, 0.0, 0.0],
+        "orbit_samples_xyz_au": [[1.0, 0.0, 0.0], [1.0, 0.1, 0.0]],
+        "orbit_sample_times_utc": [
+            (epoch - timedelta(minutes=30)).isoformat(),
+            (epoch + timedelta(minutes=30)).isoformat(),
+        ],
+    }
+
+    async def _stub_load_vectors_from_db(*_args, **_kwargs):
+        return None
+
+    async def _stub_load_latest_vectors_from_db(*_args, **_kwargs):
+        return {"payload": payload}
+
+    async def _stub_load_latest_vectors_for_command_from_db(*_args, **_kwargs):
+        return None
+
+    def _failing_fetch(*_args, **_kwargs):
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr(scene, "_load_vectors_from_db", _stub_load_vectors_from_db)
+    monkeypatch.setattr(scene, "_load_latest_vectors_from_db", _stub_load_latest_vectors_from_db)
+    monkeypatch.setattr(
+        scene,
+        "_load_latest_vectors_for_command_from_db",
+        _stub_load_latest_vectors_for_command_from_db,
+    )
+    monkeypatch.setattr(scene, "fetch_celestial_vectors", _failing_fetch)
+
+    result = await scene._get_vectors_snapshot(
+        command="Voyager 1",
+        epoch=epoch,
+        past_hours=1,
+        future_hours=24,
+        step_minutes=60,
+        observer_location={"lat": 40.0, "lon": 22.0},
+        force_refresh=True,
+        logger=_DummyLogger(),
+        allow_network_fetch=True,
+    )
+
+    assert result["cache"] == "db-stale-latest"
+    assert result["stale"] is True
+    assert result["payload"]["command"] == "Voyager 1"
+    assert "network down" in str(result["error"])
+
+
+@pytest.mark.asyncio
+async def test_fetch_celestial_with_cache_preserves_stale_computed_hits(monkeypatch):
+    epoch = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+    targets = [
+        {
+            "target_type": "mission",
+            "target_key": "mission:Voyager 1",
+            "command": "Voyager 1",
+            "name": "Voyager 1",
+        }
+    ]
+    calls = {"snapshot": 0}
+
+    async def _stub_get_vectors_snapshot(*_args, **_kwargs):
+        calls["snapshot"] += 1
+        return {
+            "payload": {
+                "command": "Voyager 1",
+                "position_xyz_au": [1.0, 0.0, 0.0],
+                "orbit_samples_xyz_au": [[1.0, 0.0, 0.0], [1.0, 0.1, 0.0]],
+                "orbit_sample_times_utc": [
+                    (epoch - timedelta(minutes=30)).isoformat(),
+                    (epoch + timedelta(minutes=30)).isoformat(),
+                ],
+                "source": "horizons",
+            },
+            "cache": "db-stale",
+            "stale": True,
+            "error": "fetch failed",
+        }
+
+    monkeypatch.setattr(scene, "_get_vectors_snapshot", _stub_get_vectors_snapshot)
+    scene._computed_cache.clear()
+
+    first = await scene._fetch_celestial_with_cache(
+        targets=targets,
+        epoch=epoch,
+        past_hours=1,
+        future_hours=1,
+        step_minutes=60,
+        observer_location=None,
+        earth_position_xyz_au=None,
+        body_snapshot_by_id={},
+        force_refresh=False,
+        allow_network_fetch=True,
+        logger=_DummyLogger(),
+    )
+
+    second = await scene._fetch_celestial_with_cache(
+        targets=targets,
+        epoch=epoch,
+        past_hours=1,
+        future_hours=1,
+        step_minutes=60,
+        observer_location=None,
+        earth_position_xyz_au=None,
+        body_snapshot_by_id={},
+        force_refresh=False,
+        allow_network_fetch=True,
+        logger=_DummyLogger(),
+    )
+
+    scene._computed_cache.clear()
+
+    assert calls["snapshot"] == 1
+    assert first[0]["stale"] is True
+    assert first[0]["cache"] == "db-stale"
+    assert second[0]["cache"] == "computed-hit"
+    assert second[0]["stale"] is True
+    assert second[0]["error"] == "fetch failed"
