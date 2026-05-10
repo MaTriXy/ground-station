@@ -39,31 +39,18 @@ def _config_int(name: str, default: int, minimum: int) -> int:
     return max(minimum, value)
 
 
-def _config_float(name: str, default: float, minimum: float) -> float:
-    try:
-        value = float(getattr(arguments, name, default))
-    except (TypeError, ValueError):
-        value = float(default)
-    return max(minimum, value)
-
-
-CACHE_TTL_SECONDS = _config_int("celestial_runtime_cache_ttl_seconds", 120, 0)
-VECTOR_DB_TTL_SECONDS = _config_int("celestial_vector_db_ttl_seconds", 2 * 60 * 60, 60)
-VECTOR_EPOCH_BUCKET_MINUTES = _config_int("celestial_vector_epoch_bucket_minutes", 60, 1)
-COMPUTED_EPOCH_BUCKET_SECONDS = _config_int("celestial_computed_epoch_bucket_seconds", 60, 1)
-SKY_MOTION_ACCURACY_TARGET_DEG = _config_float(
-    "celestial_sky_motion_accuracy_target_deg", 0.25, 0.01
-)
-SKY_MOTION_SAFETY_FACTOR = _config_float("celestial_sky_motion_safety_factor", 0.5, 0.01)
-SKY_MOTION_DYNAMIC_TTL_MIN_SECONDS = _config_int("celestial_dynamic_cache_min_seconds", 2 * 60, 1)
-SKY_MOTION_DYNAMIC_TTL_MAX_SECONDS = _config_int(
-    "celestial_dynamic_cache_max_seconds",
-    6 * 60 * 60,
-    SKY_MOTION_DYNAMIC_TTL_MIN_SECONDS,
-)
+# Celestial cache policy is fixed by code, not by app config.
+CACHE_TTL_SECONDS = 120
+VECTOR_DB_TTL_SECONDS = 2 * 60 * 60
+VECTOR_EPOCH_BUCKET_MINUTES = 60
+COMPUTED_EPOCH_BUCKET_SECONDS = 60
+SKY_MOTION_ACCURACY_TARGET_DEG = 0.25
+SKY_MOTION_SAFETY_FACTOR = 0.5
+SKY_MOTION_DYNAMIC_TTL_MIN_SECONDS = 2 * 60
+SKY_MOTION_DYNAMIC_TTL_MAX_SECONDS = 6 * 60 * 60
 SCHEDULED_SYNC_PAST_HOURS = _config_int("celestial_sync_past_hours", 1, 0)
-SCHEDULED_SYNC_FUTURE_HOURS = _config_int("celestial_sync_future_hours", 24, 1)
-SCHEDULED_SYNC_STEP_MINUTES = _config_int("celestial_sync_step_minutes", 60, 1)
+SCHEDULED_SYNC_FUTURE_HOURS = 24
+SCHEDULED_SYNC_STEP_MINUTES = 60
 MAX_SAMPLES_PER_TARGET = 1500
 DEFAULT_CELESTIAL_TARGETS: List[Dict[str, str]] = []
 NO_EPHEMERIS_ERROR_FRAGMENT = "No ephemeris data returned by Horizons"

@@ -47,16 +47,6 @@ DEFAULT_APP_CONFIG: Dict[str, Any] = {
     "celestial_periodic_sync_enabled": True,
     "celestial_periodic_sync_interval_minutes": 60,
     "celestial_sync_past_hours": 1,
-    "celestial_sync_future_hours": 24,
-    "celestial_sync_step_minutes": 60,
-    "celestial_runtime_cache_ttl_seconds": 120,
-    "celestial_vector_db_ttl_seconds": 2 * 60 * 60,
-    "celestial_vector_epoch_bucket_minutes": 60,
-    "celestial_computed_epoch_bucket_seconds": 60,
-    "celestial_dynamic_cache_min_seconds": 2 * 60,
-    "celestial_dynamic_cache_max_seconds": 6 * 60 * 60,
-    "celestial_sky_motion_accuracy_target_deg": 0.25,
-    "celestial_sky_motion_safety_factor": 0.5,
 }
 
 
