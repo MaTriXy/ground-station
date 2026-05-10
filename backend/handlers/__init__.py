@@ -29,6 +29,7 @@ Legacy handlers (deprecated):
 
 from .base import run_async_in_thread
 from .entities import (
+    appsettings,
     celestial,
     decoderconfig,
     filebrowser,
@@ -55,6 +56,7 @@ __all__ = [
     "dispatch_request",
     # Entity modules
     "satellites",
+    "appsettings",
     "orbitalsources.py",
     "tlesources.py",
     "groups",

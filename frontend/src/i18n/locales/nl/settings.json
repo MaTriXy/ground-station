@@ -48,6 +48,26 @@
     "toast_position_bottom_center": "Onder Midden",
     "toast_position_bottom_right": "Onder Rechts"
   },
+  "app_settings": {
+    "title": "Application Settings",
+    "unsaved": "Unsaved changes",
+    "saved": "Saved",
+    "reload": "Reload",
+    "config_path": "Config file: {{path}}",
+    "load_failed": "Load failed",
+    "save_complete_title": "Save Complete",
+    "restart_needed_title": "Restart Required",
+    "updated_keys": "Updated: {{keys}}",
+    "open_restart": "Open Maintenance",
+    "loading": "Loading application settings...",
+    "locked": "CLI override active",
+    "not_in_file": "Not in file",
+    "reset": "Reset",
+    "saving": "Saving...",
+    "save": "Save Settings",
+    "save_success": "Application settings were saved.",
+    "no_socket": "No active backend connection."
+  },
   "location": {
     "title": "Selecteer locatie op kaart",
     "subtitle": "Gebruik de onderstaande kaart om de locatie van het grondstation in te stellen",

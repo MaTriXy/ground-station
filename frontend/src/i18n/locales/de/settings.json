@@ -48,6 +48,26 @@
     "toast_position_bottom_center": "Unten Mitte",
     "toast_position_bottom_right": "Unten Rechts"
   },
+  "app_settings": {
+    "title": "Application Settings",
+    "unsaved": "Unsaved changes",
+    "saved": "Saved",
+    "reload": "Reload",
+    "config_path": "Config file: {{path}}",
+    "load_failed": "Load failed",
+    "save_complete_title": "Save Complete",
+    "restart_needed_title": "Restart Required",
+    "updated_keys": "Updated: {{keys}}",
+    "open_restart": "Open Maintenance",
+    "loading": "Loading application settings...",
+    "locked": "CLI override active",
+    "not_in_file": "Not in file",
+    "reset": "Reset",
+    "saving": "Saving...",
+    "save": "Save Settings",
+    "save_success": "Application settings were saved.",
+    "no_socket": "No active backend connection."
+  },
   "location": {
     "title": "Standort auf Karte auswählen",
     "subtitle": "Verwenden Sie die Karte unten, um den Standort der Bodenstation festzulegen",

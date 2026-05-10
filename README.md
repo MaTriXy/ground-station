@@ -438,6 +438,20 @@ Ground Station includes an automated observation system for scheduled satellite 
 
 For development setup, build steps, and testing, see `DEVELOPMENT.md`.
 
+## Application Configuration
+
+Ground Station backend runtime options are stored in `backend/data/configs/app_config.json` and are editable in the UI at `Settings -> Settings`.
+
+Configuration precedence is:
+
+1. CLI flags (highest priority)
+2. `app_config.json`
+3. built-in defaults (lowest priority)
+
+The UI also exposes when a value is currently CLI-overridden and whether a change is hot-applied or restart-required.
+
+`/settings/preferences` is kept as a compatibility route and is now rendered as a tab inside the unified Settings page.
+
 ## Docker
 
 ### Building from Source

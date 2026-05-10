@@ -19,7 +19,7 @@
     "main_settings_tabs": "main settings tabs"
   },
   "preferences": {
-    "title": "Application Preferences",
+    "title": "User Preferences",
     "subtitle": "Configure your application settings and API keys",
     "theme": "Theme",
     "language": "Language",
@@ -86,6 +86,26 @@
     "google_translate_pricing_link_aria": "Open Google Translate pricing in a new tab",
     "privacy_notice_link": "Privacy Notice",
     "privacy_notice_link_aria": "Open privacy notice in a new tab"
+  },
+  "app_settings": {
+    "title": "Application Settings",
+    "unsaved": "Unsaved changes",
+    "saved": "Saved",
+    "reload": "Reload",
+    "config_path": "Config file: {{path}}",
+    "load_failed": "Load failed",
+    "save_complete_title": "Save Complete",
+    "restart_needed_title": "Restart Required",
+    "updated_keys": "Updated: {{keys}}",
+    "open_restart": "Open Maintenance",
+    "loading": "Loading application settings...",
+    "locked": "CLI override active",
+    "not_in_file": "Not in file",
+    "reset": "Reset",
+    "saving": "Saving...",
+    "save": "Save Settings",
+    "save_success": "Application settings were saved.",
+    "no_socket": "No active backend connection."
   },
   "location": {
     "title": "Select location on map",

@@ -904,6 +904,12 @@ export default function Layout() {
     const isActiveRoute = (segment) => {
         const currentPath = location.pathname.slice(1); // Remove leading slash
         if (segment === '' && currentPath === '') return true;
+        if (
+            segment === 'settings/settings' &&
+            (currentPath.startsWith('settings/settings') || currentPath.startsWith('settings/preferences'))
+        ) {
+            return true;
+        }
         if (segment && currentPath.startsWith(segment)) return true;
         return false;
     };

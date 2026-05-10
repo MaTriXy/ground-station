@@ -25,6 +25,7 @@ import {createBrowserRouter, RouterProvider} from "react-router";
 import {
     SettingsTabLocation,
     SettingsTabRotator,
+    SettingsTabSettings,
     SettingsTabPreferences,
     SettingsTabSatellites,
     SettingsTabMaintenance,
@@ -116,6 +117,10 @@ const router = createBrowserRouter([
                     {
                         path: "settings",
                         children: [
+                            {
+                                path: "settings",
+                                Component: SettingsTabSettings,
+                            },
                             {
                                 path: "preferences",
                                 Component: SettingsTabPreferences,

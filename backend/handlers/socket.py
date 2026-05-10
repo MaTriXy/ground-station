@@ -7,6 +7,7 @@ from db import AsyncSessionLocal
 
 # Import all entity modules to register their handlers
 from handlers.entities import (
+    appsettings,
     celestial,
     decoderconfig,
     groups,
@@ -47,6 +48,7 @@ from tasks.registry import get_task
 
 def _register_all_handlers():
     """Register all entity handlers with the global registry."""
+    appsettings.register_handlers(handler_registry)
     satellites.register_handlers(handler_registry)
     orbitalsources.register_handlers(handler_registry)
     groups.register_handlers(handler_registry)

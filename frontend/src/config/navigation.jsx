@@ -340,8 +340,8 @@ export const getNavigation = ({ showCelestial = false } = {}) => {
         title: i18n.t('settings', { ns: 'navigation' }),
     },
     {
-        segment: 'settings/preferences',
-        title: i18n.t('preferences', { ns: 'navigation' }),
+        segment: 'settings/settings',
+        title: i18n.t('settings', { ns: 'navigation' }),
         icon: <PreferenceVerticalIcon/>,
     },
     {

@@ -23,6 +23,7 @@ run as expected.
 from . import orbitalsources  # noqa: F401
 from . import tlesources  # noqa: F401
 from . import (
+    appsettings,
     celestial,
     filebrowser,
     groups,
@@ -39,6 +40,7 @@ from . import (
 )
 
 __all__ = [
+    "appsettings",
     "satellites",
     "orbitalsources",
     "tlesources",

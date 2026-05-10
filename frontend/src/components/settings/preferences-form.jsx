@@ -21,19 +21,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updatePreferences, setPreference } from './preferences-slice.jsx';
 import { tz } from 'moment-timezone';
-import Paper from '@mui/material/Paper';
 import { useTranslation } from 'react-i18next';
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
-    Alert,
     Backdrop,
     Box,
     Button,
     Chip,
     CircularProgress,
-    Divider,
     FormControl,
     FormHelperText,
     IconButton,
@@ -52,6 +49,14 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useSocket } from '../common/socket.jsx';
 import { toast } from '../../utils/toast-with-timestamp.jsx';
 import { getAvailableThemesWithMetadata } from '../../themes/theme-configs.js';
+import {
+    SettingsActionFooter,
+    SettingsBanner,
+    SettingsMetaRow,
+    SettingsSection,
+    SettingsSurface,
+    SettingsSurfaceHeader,
+} from './shared/index.js';
 
 const EDITABLE_KEYS = [
     'timezone',
@@ -124,7 +129,7 @@ const SecretsField = ({
 
     return (
         <Stack spacing={1}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <SettingsMetaRow sx={{ justifyContent: 'space-between' }}>
                 <Typography variant="subtitle2">{label}</Typography>
                 <Chip
                     size="small"
@@ -132,7 +137,7 @@ const SecretsField = ({
                     label={statusLabel}
                     variant={value ? 'filled' : 'outlined'}
                 />
-            </Stack>
+            </SettingsMetaRow>
             <TextField
                 fullWidth
                 size="small"
@@ -286,6 +291,14 @@ const PreferencesForm = () => {
             ? t('preferences.state_unsaved', { defaultValue: 'You have unsaved changes.' })
             : t('preferences.state_saved', { defaultValue: 'All changes saved.' });
 
+    const headerStatusText = isSaving || isLoading
+        ? t('preferences.saving_button', { defaultValue: 'Saving...' })
+        : isDirty
+            ? t('app_settings.unsaved', { defaultValue: 'Unsaved changes' })
+            : t('app_settings.saved', { defaultValue: 'Saved' });
+
+    const headerStatusColor = isSaving || isLoading ? 'info' : (isDirty ? 'warning' : 'success');
+
     return (
         <>
             <Backdrop
@@ -303,15 +316,16 @@ const PreferencesForm = () => {
                 <Typography variant="h6">{t('preferences.reloading', { defaultValue: 'Reloading...' })}</Typography>
             </Backdrop>
 
-            <Paper elevation={3} sx={{ p: 2, mt: 0, borderRadius: 0 }}>
+            <SettingsSurface>
                 <Box component="form">
-                    <Stack spacing={3}>
-                        <Box>
-                            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-                                {t('general')}
-                            </Typography>
-                            <Divider sx={{ mb: 2 }} />
+                    <Stack spacing={2}>
+                        <SettingsSurfaceHeader
+                            title={t('preferences.title', { defaultValue: 'User Preferences' })}
+                            subtitle={t('preferences.subtitle', { defaultValue: 'Configure your application settings and API keys' })}
+                            status={{ label: headerStatusText, color: headerStatusColor }}
+                        />
 
+                        <SettingsSection title={t('general')}>
                             <Grid container spacing={2} columns={12}>
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <FormControl fullWidth size="small" disabled={isSaving || isLoading}>
@@ -395,9 +409,9 @@ const PreferencesForm = () => {
                                         </FormHelperText>
                                     </FormControl>
                                     {themeChanged && (
-                                        <Alert severity="info" sx={{ mt: 1 }}>
+                                        <SettingsBanner severity="info" sx={{ mt: 1 }}>
                                             {t('preferences.theme_reload_required', { defaultValue: 'Theme will be applied after saving and reloading.' })}
-                                        </Alert>
+                                        </SettingsBanner>
                                     )}
                                 </Grid>
 
@@ -421,14 +435,9 @@ const PreferencesForm = () => {
                                     </FormControl>
                                 </Grid>
                             </Grid>
-                        </Box>
+                        </SettingsSection>
 
-                        <Box>
-                            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-                                {t('preferences.labs', { defaultValue: 'Labs' })}
-                            </Typography>
-                            <Divider sx={{ mb: 2 }} />
-
+                        <SettingsSection title={t('preferences.labs', { defaultValue: 'Labs' })}>
                             <Grid container spacing={2} columns={12}>
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <FormControl fullWidth size="small" disabled={isSaving || isLoading}>
@@ -451,14 +460,9 @@ const PreferencesForm = () => {
                                     </FormControl>
                                 </Grid>
                             </Grid>
-                        </Box>
+                        </SettingsSection>
 
-                        <Box>
-                            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-                                {t('preferences.api_configuration')}
-                            </Typography>
-                            <Divider sx={{ mb: 2 }} />
-
+                        <SettingsSection title={t('preferences.api_configuration')}>
                             <Grid container spacing={2} columns={12}>
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <SecretsField
@@ -477,20 +481,24 @@ const PreferencesForm = () => {
                                     />
                                 </Grid>
                             </Grid>
-                        </Box>
+                        </SettingsSection>
 
-                        <Box>
-                            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-                                {t('preferences.transcription_settings', { defaultValue: 'Transcription Services' })}
-                            </Typography>
-                            <Divider sx={{ mb: 2 }} />
-
+                        <SettingsSection title={t('preferences.transcription_settings', { defaultValue: 'Transcription Services' })}>
                             <Grid container spacing={2} columns={12}>
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <Stack spacing={1.25}>
-                                        <Accordion disableGutters>
+                                        <Accordion
+                                            disableGutters
+                                            sx={{
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                borderRadius: 1,
+                                                overflow: 'hidden',
+                                                '&:before': { display: 'none' },
+                                            }}
+                                        >
                                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                                <Stack direction="row" spacing={1} alignItems="center">
+                                                <SettingsMetaRow>
                                                     <Typography fontWeight={600}>{t('preferences.gemini_api_key', { defaultValue: 'Gemini API Key' })}</Typography>
                                                     <Chip
                                                         size="small"
@@ -499,7 +507,7 @@ const PreferencesForm = () => {
                                                             ? t('preferences.configured', { defaultValue: 'Configured' })
                                                             : t('preferences.not_configured', { defaultValue: 'Not configured' })}
                                                     />
-                                                </Stack>
+                                                </SettingsMetaRow>
                                             </AccordionSummary>
                                             <AccordionDetails>
                                                 <Stack spacing={1.5}>
@@ -542,9 +550,18 @@ const PreferencesForm = () => {
                                             </AccordionDetails>
                                         </Accordion>
 
-                                        <Accordion disableGutters>
+                                        <Accordion
+                                            disableGutters
+                                            sx={{
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                borderRadius: 1,
+                                                overflow: 'hidden',
+                                                '&:before': { display: 'none' },
+                                            }}
+                                        >
                                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                                <Stack direction="row" spacing={1} alignItems="center">
+                                                <SettingsMetaRow>
                                                     <Typography fontWeight={600}>{t('preferences.deepgram_api_key', { defaultValue: 'Deepgram API Key' })}</Typography>
                                                     <Chip
                                                         size="small"
@@ -553,7 +570,7 @@ const PreferencesForm = () => {
                                                             ? t('preferences.configured', { defaultValue: 'Configured' })
                                                             : t('preferences.not_configured', { defaultValue: 'Not configured' })}
                                                     />
-                                                </Stack>
+                                                </SettingsMetaRow>
                                             </AccordionSummary>
                                             <AccordionDetails>
                                                 <Stack spacing={1.5}>
@@ -596,9 +613,18 @@ const PreferencesForm = () => {
                                             </AccordionDetails>
                                         </Accordion>
 
-                                        <Accordion disableGutters>
+                                        <Accordion
+                                            disableGutters
+                                            sx={{
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                borderRadius: 1,
+                                                overflow: 'hidden',
+                                                '&:before': { display: 'none' },
+                                            }}
+                                        >
                                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                                <Stack direction="row" spacing={1} alignItems="center">
+                                                <SettingsMetaRow>
                                                     <Typography fontWeight={600}>{t('preferences.google_translate_api_key', { defaultValue: 'Google Translate API Key' })}</Typography>
                                                     <Chip
                                                         size="small"
@@ -607,7 +633,7 @@ const PreferencesForm = () => {
                                                             ? t('preferences.configured', { defaultValue: 'Configured' })
                                                             : t('preferences.not_configured', { defaultValue: 'Not configured' })}
                                                     />
-                                                </Stack>
+                                                </SettingsMetaRow>
                                             </AccordionSummary>
                                             <AccordionDetails>
                                                 <Stack spacing={1.5}>
@@ -644,56 +670,32 @@ const PreferencesForm = () => {
                                     </Stack>
                                 </Grid>
                             </Grid>
-                        </Box>
-                    </Stack>
+                        </SettingsSection>
 
-                    <Box
-                        sx={{
-                            mt: 3,
-                            position: 'sticky',
-                            bottom: 8,
-                            zIndex: 2,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            p: 1.5,
-                            bgcolor: 'background.paper',
-                        }}
-                    >
-                        <Stack
-                            direction={{ xs: 'column', sm: 'row' }}
-                            justifyContent="space-between"
-                            alignItems={{ xs: 'flex-start', sm: 'center' }}
-                            spacing={1.5}
-                        >
-                            <Typography variant="body2" role="status" aria-live="polite">
-                                {saveStatusText}
-                            </Typography>
-                            <Stack direction="row" spacing={1}>
-                                <Button
-                                    variant="outlined"
-                                    color="inherit"
-                                    disabled={!isDirty || isSaving || isLoading}
-                                    onClick={handleReset}
-                                >
-                                    {t('preferences.reset_changes', { defaultValue: 'Reset' })}
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    disabled={!isDirty || isSaving || isLoading}
-                                    onClick={handleSavePreferences}
-                                    data-testid="preferences-save-button"
-                                >
-                                    {isSaving || isLoading
-                                        ? t('preferences.saving_button', { defaultValue: 'Saving...' })
-                                        : t('preferences.save_preferences')}
-                                </Button>
-                            </Stack>
-                        </Stack>
-                    </Box>
+                        <SettingsActionFooter statusText={saveStatusText} sticky sx={{ mt: 1 }}>
+                            <Button
+                                variant="outlined"
+                                color="inherit"
+                                disabled={!isDirty || isSaving || isLoading}
+                                onClick={handleReset}
+                            >
+                                {t('preferences.reset_changes', { defaultValue: 'Reset' })}
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                disabled={!isDirty || isSaving || isLoading}
+                                onClick={handleSavePreferences}
+                                data-testid="preferences-save-button"
+                            >
+                                {isSaving || isLoading
+                                    ? t('preferences.saving_button', { defaultValue: 'Saving...' })
+                                    : t('preferences.save_preferences')}
+                            </Button>
+                        </SettingsActionFooter>
+                    </Stack>
                 </Box>
-            </Paper>
+            </SettingsSurface>
         </>
     );
 };
