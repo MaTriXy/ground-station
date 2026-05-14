@@ -180,8 +180,8 @@ test.describe('Satellite List CRUD', () => {
     await page.goto('/satellites/satellites');
     await page.waitForLoadState('domcontentloaded');
 
-    const baseId = Date.now() % 100000;
-    const noradId = String(80000 + baseId);
+    // Keep a deterministic 5-digit NORAD ID to avoid invalid values.
+    const noradId = String(10000 + (Date.now() % 90000));
     const name = `E2E Sat ${noradId}`;
     const updatedName = `${name} Updated`;
     const tle1 = '1 25544U 98067A   20029.54791585  .00001264  00000-0  29621-4 0  9994';
@@ -192,6 +192,7 @@ test.describe('Satellite List CRUD', () => {
     await expect(addDialog).toBeVisible();
     await addDialog.getByRole('textbox', { name: /^name$/i }).fill(name);
     await addDialog.locator('input[name="norad_id"]').fill(noradId);
+    await addDialog.getByRole('tab', { name: /^orbital$/i }).click();
     await addDialog.getByRole('textbox', { name: /tle line 1/i }).fill(tle1);
     await addDialog.getByRole('textbox', { name: /tle line 2/i }).fill(tle2);
     await addDialog.getByRole('button', { name: /^submit$/i }).click();
@@ -211,6 +212,7 @@ test.describe('Satellite List CRUD', () => {
     const editDialog = page.getByRole('dialog', { name: /edit satellite/i });
     await expect(editDialog).toBeVisible();
     await editDialog.getByRole('textbox', { name: /^name$/i }).fill(updatedName);
+    await editDialog.getByRole('tab', { name: /^orbital$/i }).click();
     await editDialog.getByRole('textbox', { name: /tle line 1/i }).fill(tle1);
     await editDialog.getByRole('textbox', { name: /tle line 2/i }).fill(tle2);
     await editDialog.getByRole('button', { name: /^edit$/i }).click();
