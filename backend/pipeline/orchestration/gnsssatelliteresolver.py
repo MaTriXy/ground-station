@@ -49,7 +49,15 @@ _CODE_TO_LABEL = {
 _CODE_ALIASES = {
     "G": ("gps", "navstar"),
     "E": ("galileo", "gsat"),
-    "R": ("glonass",),
+    "R": ("glonass", "cosmos", "uragan"),
+    "C": ("beidou", "bds"),
+    "J": ("qzss", "qzs", "michibiki"),
+}
+
+_CODE_NAME_ALIASES = {
+    "G": ("gps", "navstar"),
+    "E": ("galileo",),
+    "R": ("glonass", "uragan"),
     "C": ("beidou", "bds"),
     "J": ("qzss", "qzs", "michibiki"),
 }
@@ -67,10 +75,13 @@ class GnssSatelliteResolver:
         self,
         logger: Optional[logging.Logger] = None,
         identity_ttl_seconds: int = 3600,
+        negative_identity_ttl_seconds: int = 45,
         catalog_ttl_seconds: int = 300,
     ) -> None:
         self.logger = logger or logging.getLogger("gnss-satellite-resolver")
         self.identity_ttl_seconds = max(60, identity_ttl_seconds)
+        # Keep negative-cache TTL short so newly inserted aliases/rows become visible quickly.
+        self.negative_identity_ttl_seconds = max(5, negative_identity_ttl_seconds)
         self.catalog_ttl_seconds = max(30, catalog_ttl_seconds)
         self._identity_cache: Dict[Tuple[str, int], Tuple[float, Optional[Dict[str, Any]]]] = {}
         self._catalog_cache: Tuple[float, List[Dict[str, Any]]] = (0.0, [])
@@ -141,6 +152,7 @@ class GnssSatelliteResolver:
                     Satellites.name,
                     Satellites.name_other,
                     Satellites.alternative_name,
+                    Satellites.sat_id,
                     Satellites.decayed,
                 )
             )
@@ -151,6 +163,7 @@ class GnssSatelliteResolver:
                         "name": row.name or "",
                         "name_other": row.name_other or "",
                         "alternative_name": row.alternative_name or "",
+                        "sat_id": row.sat_id or "",
                         "decayed": row.decayed,
                     }
                 )
@@ -165,38 +178,54 @@ class GnssSatelliteResolver:
                 str(candidate.get("name") or ""),
                 str(candidate.get("name_other") or ""),
                 str(candidate.get("alternative_name") or ""),
+                str(candidate.get("sat_id") or ""),
             ]
         ).lower()
 
         alias_hit = any(alias in haystack for alias in _CODE_ALIASES.get(code, ()))
+        if not alias_hit:
+            return 0
+
         prn_pattern = re.compile(rf"\bprn\W*0*{prn}\b", re.IGNORECASE)
-        code_pattern = re.compile(rf"\b{code.lower()}0*{prn}\b", re.IGNORECASE)
+        code_pattern = re.compile(rf"\b{code.lower()}\W*0*{prn}\b", re.IGNORECASE)
+        constellation_name_pattern = re.compile(
+            rf"\b(?:{'|'.join(re.escape(alias) for alias in _CODE_NAME_ALIASES.get(code, ()))})\b"
+            rf"\W*(?:prn|slot)?\W*0*{prn}\b",
+            re.IGNORECASE,
+        )
 
         score = 0
 
-        # Alias hits are required for constellation disambiguation.
-        if alias_hit:
-            score += 40
+        has_prn = bool(prn_pattern.search(haystack))
+        has_code = bool(code_pattern.search(haystack))
+        has_constellation_number = bool(constellation_name_pattern.search(haystack))
 
-        if prn_pattern.search(haystack):
+        # Require a numeric constellation-specific identity match to avoid false positives.
+        if not (has_prn or has_code or has_constellation_number):
+            return 0
+
+        score += 25
+
+        if has_prn:
+            score += 70
+        if has_code:
+            score += 65
+        if has_constellation_number:
             score += 60
-        if code_pattern.search(haystack):
-            score += 55
 
         # Prefer non-decayed records when multiple candidates share the same PRN slot.
         if candidate.get("decayed") is None:
-            score += 5
+            score += 3
 
         return score
 
     @staticmethod
     def _score_threshold(code: str) -> int:
-        # We keep thresholds high to avoid incorrect NORAD attribution.
-        # GPS/BeiDou are usually resolvable via explicit PRN/Cxx naming.
-        # Others may legitimately return no match when local catalog lacks aliases.
-        if code in {"G", "C"}:
-            return 90
-        return 95
+        # Scores now require both constellation alias and numeric identity.
+        # Keep threshold conservative but low enough for GALILEO "GALILEO <N>" rows.
+        if code in {"G", "E", "C", "J"}:
+            return 85
+        return 90
 
     async def resolve_from_output(self, output: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         if not isinstance(output, dict):
@@ -210,8 +239,14 @@ class GnssSatelliteResolver:
         cache_key = (code, prn)
         cached = self._identity_cache.get(cache_key)
         now = time.time()
-        if cached and (now - cached[0]) < self.identity_ttl_seconds:
-            return cached[1]
+        if cached:
+            cache_ttl = (
+                self.identity_ttl_seconds
+                if cached[1] is not None
+                else self.negative_identity_ttl_seconds
+            )
+            if (now - cached[0]) < cache_ttl:
+                return cached[1]
 
         catalog = await self._get_catalog()
         scored = []
