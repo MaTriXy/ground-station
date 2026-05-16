@@ -85,6 +85,10 @@ class GNSSSdrDecoder(BaseDecoderProcess):
         self.gnss_log_read_offset = 0
         self._last_output_event_ts = 0.0
         self._last_output_event_line = ""
+        self._last_fifo_drop_log_ts = 0.0
+        # Keep write timeout short so the decoder loop remains responsive,
+        # while still allowing retried writes for FIFO backpressure spikes.
+        self.fifo_write_timeout_s = 0.2
 
         # DSP state
         self.sdr_sample_rate: Optional[float] = None
@@ -258,6 +262,9 @@ class GNSSSdrDecoder(BaseDecoderProcess):
             "samples_in": perf_stats.get("samples_in", 0),
             "samples_written": perf_stats.get("samples_written_to_fifo", 0),
             "fifo_write_drops": perf_stats.get("fifo_write_drops", 0),
+            "fifo_blocking_retries": perf_stats.get("fifo_blocking_retries", 0),
+            "fifo_partial_write_events": perf_stats.get("fifo_partial_write_events", 0),
+            "fifo_write_errors": perf_stats.get("fifo_write_errors", 0),
             "queue_timeouts": perf_stats.get("queue_timeouts", 0),
             "last_gnss_log": self.last_gnss_log_line,
         }
@@ -514,6 +521,9 @@ class GNSSSdrDecoder(BaseDecoderProcess):
                 "PVT.positioning_mode=Single",
                 "PVT.iono_model=Broadcast",
                 "PVT.trop_model=Saastamoinen",
+                # Enable RTKLIB maximum trace verbosity while diagnosing
+                # missing first-fix / repeated solver-reset loops.
+                "PVT.rtk_trace_level=5",
                 f"PVT.output_rate_ms={self.gnss_output_rate_ms}",
                 f"PVT.display_rate_ms={self.gnss_output_rate_ms}",
                 "PVT.output_enabled=true",
@@ -687,6 +697,56 @@ class GNSSSdrDecoder(BaseDecoderProcess):
                 raise
         raise TimeoutError("Timed out waiting for gnss-sdr FIFO reader")
 
+    def _write_fifo_payload(self, payload: bytes) -> Tuple[int, int, int, int, int]:
+        """
+        Write IQ bytes to the FIFO with partial-write handling.
+
+        This prevents silent sample loss when `os.write` accepts only part of the
+        buffer or temporarily returns EAGAIN under FIFO backpressure.
+        """
+        if not payload:
+            return 0, 0, 0, 0, 0
+
+        if self.fifo_fd is None:
+            return 0, len(payload) // 4, 0, 0, 1
+
+        total_bytes = len(payload)
+        bytes_written = 0
+        blocking_retries = 0
+        partial_write_events = 0
+        write_errors = 0
+        deadline = time.time() + self.fifo_write_timeout_s
+
+        while bytes_written < total_bytes and self.running.value == 1:
+            try:
+                wrote_now = os.write(self.fifo_fd, payload[bytes_written:])
+                if wrote_now <= 0:
+                    break
+                if wrote_now < (total_bytes - bytes_written):
+                    partial_write_events += 1
+                bytes_written += wrote_now
+            except InterruptedError:
+                blocking_retries += 1
+                continue
+            except BlockingIOError:
+                blocking_retries += 1
+                if time.time() >= deadline:
+                    break
+                time.sleep(0.001)
+            except OSError:
+                write_errors += 1
+                break
+
+        wrote_samples = bytes_written // 4
+        dropped_samples = max(0, (total_bytes - bytes_written) // 4)
+        return (
+            wrote_samples,
+            dropped_samples,
+            blocking_retries,
+            partial_write_events,
+            write_errors,
+        )
+
     def _parse_nmea_lat_lon(self, value: str, hemisphere: str) -> Optional[float]:
         if not value:
             return None
@@ -843,6 +903,9 @@ class GNSSSdrDecoder(BaseDecoderProcess):
             "samples_in": 0,
             "samples_written_to_fifo": 0,
             "fifo_write_drops": 0,
+            "fifo_blocking_retries": 0,
+            "fifo_partial_write_events": 0,
+            "fifo_write_errors": 0,
             "samples_dropped_out_of_band": 0,
             "queue_timeouts": 0,
             "data_messages_out": 0,
@@ -995,7 +1058,10 @@ class GNSSSdrDecoder(BaseDecoderProcess):
                     self.sdr_sample_rate = sdr_rate
                     self.sdr_center_freq = sdr_center
 
-                centered = self._frequency_translate(samples, vfo_center - sdr_center, sdr_rate)
+                # Temporary diagnostic mode:
+                # feed raw centered SDR IQ directly to GNSS-SDR (no per-chunk
+                # frequency translation) while testing with SDR center at L1.
+                centered = samples
                 decimated = self._decimate_iq(centered)
 
                 i = np.clip(np.real(decimated) * 32767.0, -32768, 32767).astype(np.int16)
@@ -1004,24 +1070,35 @@ class GNSSSdrDecoder(BaseDecoderProcess):
                 interleaved[0::2] = i
                 interleaved[1::2] = q
                 payload = interleaved.tobytes()
-
-                wrote_samples = 0
-                try:
-                    if self.fifo_fd is not None:
-                        written = os.write(self.fifo_fd, payload)
-                        wrote_samples = (written // 2) // 2  # bytes -> int16 -> IQ pairs
-                except BlockingIOError:
-                    with self.stats_lock:
-                        self.stats["fifo_write_drops"] += len(decimated)
-                except OSError:
-                    with self.stats_lock:
-                        self.stats["fifo_write_drops"] += len(decimated)
+                (
+                    wrote_samples,
+                    dropped_samples,
+                    fifo_retries,
+                    partial_write_events,
+                    fifo_write_errors,
+                ) = self._write_fifo_payload(payload)
 
                 with self.stats_lock:
                     self.stats["iq_chunks_in"] += 1
                     self.stats["samples_in"] += len(samples)
                     self.stats["samples_written_to_fifo"] += wrote_samples
+                    self.stats["fifo_write_drops"] += dropped_samples
+                    self.stats["fifo_blocking_retries"] += fifo_retries
+                    self.stats["fifo_partial_write_events"] += partial_write_events
+                    self.stats["fifo_write_errors"] += fifo_write_errors
                     self.stats["last_activity"] = time.time()
+
+                # Periodic warning keeps runtime visibility when IQ continuity degrades.
+                if dropped_samples > 0 and (now - self._last_fifo_drop_log_ts) >= 2.0:
+                    self._last_fifo_drop_log_ts = now
+                    logger.warning(
+                        "GNSS FIFO write dropped %d samples (retries=%d, partial=%d, errors=%d, vfo=%s)",
+                        dropped_samples,
+                        fifo_retries,
+                        partial_write_events,
+                        fifo_write_errors,
+                        self.vfo,
+                    )
 
                 # Shared-memory monitor hook from BaseDecoderProcess.
                 if self.stats["iq_chunks_in"] % 200 == 0:
