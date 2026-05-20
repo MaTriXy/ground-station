@@ -23,6 +23,7 @@ import { alpha } from '@mui/material/styles';
 
 const FIX_QUALITY_TIMELINE_WINDOW_MS = 30 * 60 * 1000;
 const FIX_QUALITY_TIMELINE_HEIGHT = 22;
+const FIX_QUALITY_GUIDE_INTERVAL_MS = 5 * 60 * 1000;
 
 function toFiniteNumber(value) {
     const parsed = Number(value);
@@ -76,6 +77,14 @@ const GnssFixQualityTimeline = React.memo(function GnssFixQualityTimeline({
         };
     }, [timeline, nowMs]);
 
+    const guideLinePositions = useMemo(() => {
+        const markerCount = Math.floor(FIX_QUALITY_TIMELINE_WINDOW_MS / FIX_QUALITY_GUIDE_INTERVAL_MS);
+        // Skip left/right edges (0 and 100) and draw only inner 5-minute markers.
+        return Array.from({ length: Math.max(0, markerCount - 1) }, (_, index) => (
+            (((index + 1) * FIX_QUALITY_GUIDE_INTERVAL_MS) / FIX_QUALITY_TIMELINE_WINDOW_MS) * 100
+        ));
+    }, []);
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.22, mt: 0.1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 0 }}>
@@ -102,6 +111,18 @@ const GnssFixQualityTimeline = React.memo(function GnssFixQualityTimeline({
                 }}
             >
                 <svg width="100%" height="100%" viewBox={`0 0 100 ${FIX_QUALITY_TIMELINE_HEIGHT}`} preserveAspectRatio="none">
+                    {guideLinePositions.map((x) => (
+                        <line
+                            key={`fix-quality-guide-${x.toFixed(2)}`}
+                            x1={x}
+                            y1="0"
+                            x2={x}
+                            y2={FIX_QUALITY_TIMELINE_HEIGHT}
+                            stroke={alpha(theme.palette.text.secondary, 0.14)}
+                            strokeWidth="0.5"
+                            strokeDasharray="1.4 1.1"
+                        />
+                    ))}
                     <line
                         x1="0"
                         y1={FIX_QUALITY_TIMELINE_HEIGHT}
