@@ -98,6 +98,7 @@ const DecodedInsightsIsland = React.memo(function DecodedInsightsIsland() {
     const { timezone, locale } = useUserTimeSettings();
     const [selectedSatelliteId, setSelectedSatelliteId] = useState(null);
     const [relativeNowMs, setRelativeNowMs] = useState(() => Date.now());
+    const [noFixSinceMs, setNoFixSinceMs] = useState(() => Date.now());
 
     const {
         outputs,
@@ -296,16 +297,24 @@ const DecodedInsightsIsland = React.memo(function DecodedInsightsIsland() {
     const currentFixElapsedMs = (displayFixStatus === 'FIX' && fixLifecycle.currentFixStartedAtMs !== null)
         ? Math.max(0, relativeNowMs - fixLifecycle.currentFixStartedAtMs)
         : null;
-    const noFixStartedAtMs = displayFixStatus === 'FIX'
-        ? null
-        : (
-            fixLifecycle.lastFixLostAtMs
-            ?? (fixLifecycle.currentStatus === 'NO FIX' ? fixLifecycle.lastSignalAtMs : null)
-            ?? (displayFixStatus === 'NO FIX' ? receiverFix.lastUpdateMs : null)
-        );
-    const noFixElapsedMs = noFixStartedAtMs !== null
-        ? Math.max(0, relativeNowMs - noFixStartedAtMs)
+    const noFixElapsedMs = noFixSinceMs !== null
+        ? Math.max(0, relativeNowMs - noFixSinceMs)
         : null;
+    useEffect(() => {
+        if (displayFixStatus === 'FIX') {
+            setNoFixSinceMs(null);
+            return;
+        }
+
+        // Start a no-fix timer immediately for initial NO FIX / NO DATA states,
+        // and reset to exact decoder-reported loss time when available.
+        setNoFixSinceMs((previous) => {
+            if (fixLifecycle.lastFixLostAtMs !== null) {
+                return fixLifecycle.lastFixLostAtMs;
+            }
+            return previous ?? Date.now();
+        });
+    }, [displayFixStatus, fixLifecycle.lastFixLostAtMs]);
     const acquiredAgoMs = fixLifecycle.lastFixAcquiredAtMs !== null
         ? Math.max(0, relativeNowMs - fixLifecycle.lastFixAcquiredAtMs)
         : null;
